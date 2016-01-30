@@ -1,8 +1,9 @@
 [package]
 name = "constant_time_eq"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Cesar Eduardo Barros <cesarb@cesarb.eti.br>"]
 description = "Compares two equal-sized byte strings in constant time."
 repository = "https://github.com/cesarb/constant_time_eq"
+documentation = "https://cesarb.github.io/constant_time_eq/constant_time_eq/"
 readme = "README"
 license = "CC0-1.0"
