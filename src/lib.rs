@@ -9,11 +9,11 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
     let a = &a[..len];
     let b = &b[..len];
 
-	let mut tmp = 0;
-	for i in 0..len {
-		tmp |= a[i] ^ b[i];
-	}
-	tmp	// The compare with 0 must happen outside this function.
+    let mut tmp = 0;
+    for i in 0..len {
+        tmp |= a[i] ^ b[i];
+    }
+    tmp // The compare with 0 must happen outside this function.
 }
 
 /// Compares two equal-sized byte strings in constant time.
@@ -33,5 +33,5 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 /// ```
 #[inline]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-	a.len() == b.len() && constant_time_ne(a, b) == 0
+    a.len() == b.len() && constant_time_ne(a, b) == 0
 }
