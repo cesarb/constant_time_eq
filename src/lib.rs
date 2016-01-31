@@ -26,6 +26,7 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 /// assert!(constant_time_eq(b"foo", b"foo"));
 /// assert!(!constant_time_eq(b"foo", b"bar"));
 /// assert!(!constant_time_eq(b"bar", b"baz"));
+/// # assert!(constant_time_eq(b"", b""));
 ///
 /// // Not equal-sized, so won't take constant time.
 /// assert!(!constant_time_eq(b"foo", b""));
