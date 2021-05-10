@@ -3,14 +3,12 @@
 extern crate constant_time_eq;
 extern crate test;
 
-use constant_time_eq::constant_time_eq;
-use test::{Bencher, black_box};
+use constant_time_eq::ConstantTimeEq;
+use test::{black_box, Bencher};
 
 fn bench(b: &mut Bencher, left: &[u8], right: &[u8]) {
     b.bytes = (left.len() + right.len()) as u64;
-    b.iter(|| {
-        constant_time_eq(black_box(left), black_box(right))
-    })
+    b.iter(|| black_box(left).constant_time_eq(&black_box(right)))
 }
 
 #[bench]
