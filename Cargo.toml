@@ -1,6 +1,7 @@
 [package]
 name = "constant_time_eq"
 version = "0.1.5"
+edition = "2021"
 authors = ["Cesar Eduardo Barros <cesarb@cesarb.eti.br>"]
 description = "Compares two equal-sized byte strings in constant time."
 documentation = "https://docs.rs/constant_time_eq"
@@ -9,6 +10,13 @@ readme = "README"
 keywords = ["constant_time"]
 categories = ["cryptography", "no-std"]
 license = "CC0-1.0"
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["cargo_bench_support", "html_reports"] }
+
+[[bench]]
+name = "bench"
+harness = false
 
 [badges]
 travis-ci = { repository = "cesarb/constant_time_eq" }
