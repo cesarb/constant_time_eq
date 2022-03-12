@@ -17,6 +17,3 @@ criterion = { version = "0.3", features = ["cargo_bench_support", "html_reports"
 [[bench]]
 name = "bench"
 harness = false
-
-[badges]
-travis-ci = { repository = "cesarb/constant_time_eq" }
