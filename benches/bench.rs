@@ -28,9 +28,9 @@ fn bench_array(c: &mut Criterion) {
 }
 
 fn bench_slice(c: &mut Criterion) {
-    let input = (&[1; 65536], &[2; 65536]);
-
     let mut group = c.benchmark_group("constant_time_eq");
+
+    let input = (&[1; 65536], &[2; 65536]);
     for &size in &[16, 32, 64, 4 * 1024, 16 * 1024, 64 * 1024] {
         let input = (&input.0[..size], &input.1[..size]);
         group.throughput(Throughput::Bytes(size as u64));
@@ -38,6 +38,7 @@ fn bench_slice(c: &mut Criterion) {
             b.iter(|| constant_time_eq(x, y))
         });
     }
+
     group.finish();
 }
 
