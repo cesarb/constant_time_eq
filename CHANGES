@@ -1,0 +1,12 @@
+# 0.2.0
+
+* Use inline assembly when available to hide from the optimizer.
+* When inline assembly is not available, use both a volatile read and
+  disabled inlining.
+* Increase minimum Rust version to 1.59, which is the first with inline
+  assembly.
+
+# 0.1.5
+
+* Add fixed-size variant for arrays with sizes 16 bytes, 32 bytes, and
+  64 bytes.
