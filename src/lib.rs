@@ -75,7 +75,6 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 /// assert!(!constant_time_eq(b"foo", b""));
 /// assert!(!constant_time_eq(b"foo", b"quux"));
 /// ```
-#[inline]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && constant_time_ne(a, b) == 0
 }
