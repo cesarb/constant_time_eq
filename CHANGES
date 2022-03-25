@@ -1,3 +1,10 @@
+# 0.2.1
+
+* Reduce inlining of variable-size variant. In 0.1.5, the loop was not
+  inlined, and it can be a bit large due to the auto-vectorization. Go
+  back to how it was in 0.1.5, but allowing the compiler to inline if
+  it believes it would be a speed gain.
+
 # 0.2.0
 
 * Use inline assembly when available to hide from the optimizer.
