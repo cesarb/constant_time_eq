@@ -1,6 +1,6 @@
 [package]
 name = "constant_time_eq"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Cesar Eduardo Barros <cesarb@cesarb.eti.br>"]
 description = "Compares two equal-sized byte strings in constant time."
