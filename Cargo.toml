@@ -15,6 +15,10 @@ rust-version = "1.59"
 [dev-dependencies]
 criterion = { version = "0.3", features = ["cargo_bench_support", "html_reports"] }
 
+[features]
+default = ["const-generics"]
+const-generics = []
+
 [[bench]]
 name = "bench"
 harness = false
