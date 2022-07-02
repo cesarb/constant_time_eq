@@ -1,3 +1,7 @@
+# 0.2.3
+
+* Add fixed-size variant for arrays of any size (using const generics).
+
 # 0.2.2
 
 * Set rust-version in Cargo.toml to 1.59.
