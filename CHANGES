@@ -1,3 +1,8 @@
+# 0.2.4
+
+* Since CC0 is no longer accepted as a license for code by Fedora, also
+  allow MIT-0 or Apache-2.0 as options. No code changes.
+
 # 0.2.3
 
 * Add fixed-size variant for arrays of any size (using const generics).
