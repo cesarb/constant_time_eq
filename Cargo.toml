@@ -13,7 +13,7 @@ license = "CC0-1.0 OR MIT-0 OR Apache-2.0"
 rust-version = "1.59"
 
 [dev-dependencies]
-criterion = { version = "0.3", features = ["cargo_bench_support", "html_reports"] }
+criterion = { version = "0.4", features = ["cargo_bench_support", "html_reports"] }
 
 [[bench]]
 name = "bench"
