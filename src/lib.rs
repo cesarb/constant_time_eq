@@ -75,6 +75,7 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 /// assert!(!constant_time_eq(b"foo", b""));
 /// assert!(!constant_time_eq(b"foo", b"quux"));
 /// ```
+#[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && constant_time_ne(a, b) == 0
 }
@@ -82,6 +83,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 // Fixed-size array variant.
 
 #[inline]
+#[must_use]
 fn constant_time_ne_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> u8 {
     let mut tmp = 0;
     for i in 0..N {
@@ -103,6 +105,7 @@ fn constant_time_ne_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> u8 {
 /// assert!(!constant_time_eq_n(&[3; 20], &[7; 20]));
 /// ```
 #[inline]
+#[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
     constant_time_ne_n(a, b) == 0
 }
@@ -120,6 +123,7 @@ pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
 /// assert!(!constant_time_eq_16(&[3; 16], &[7; 16]));
 /// ```
 #[inline]
+#[must_use]
 pub fn constant_time_eq_16(a: &[u8; 16], b: &[u8; 16]) -> bool {
     constant_time_eq_n(a, b)
 }
@@ -135,6 +139,7 @@ pub fn constant_time_eq_16(a: &[u8; 16], b: &[u8; 16]) -> bool {
 /// assert!(!constant_time_eq_32(&[3; 32], &[7; 32]));
 /// ```
 #[inline]
+#[must_use]
 pub fn constant_time_eq_32(a: &[u8; 32], b: &[u8; 32]) -> bool {
     constant_time_eq_n(a, b)
 }
@@ -150,6 +155,7 @@ pub fn constant_time_eq_32(a: &[u8; 32], b: &[u8; 32]) -> bool {
 /// assert!(!constant_time_eq_64(&[3; 64], &[7; 64]));
 /// ```
 #[inline]
+#[must_use]
 pub fn constant_time_eq_64(a: &[u8; 64], b: &[u8; 64]) -> bool {
     constant_time_eq_n(a, b)
 }
