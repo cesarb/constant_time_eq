@@ -1,3 +1,7 @@
+# 0.2.5
+
+* Add #[must_use] to all functions
+
 # 0.2.4
 
 * Since CC0 is no longer accepted as a license for code by Fedora, also
