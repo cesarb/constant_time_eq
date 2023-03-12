@@ -2,6 +2,7 @@
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[inline]
+#[must_use]
 fn optimizer_hide(mut value: u8) -> u8 {
     // SAFETY: the input value is passed unchanged to the output, the inline assembly does nothing.
     unsafe {
@@ -18,6 +19,7 @@ fn optimizer_hide(mut value: u8) -> u8 {
 ))]
 #[allow(asm_sub_register)]
 #[inline]
+#[must_use]
 fn optimizer_hide(mut value: u8) -> u8 {
     // SAFETY: the input value is passed unchanged to the output, the inline assembly does nothing.
     unsafe {
@@ -35,12 +37,14 @@ fn optimizer_hide(mut value: u8) -> u8 {
     target_arch = "riscv64"
 )))]
 #[inline(never)] // This function is non-inline to prevent the optimizer from looking inside it.
+#[must_use]
 fn optimizer_hide(value: u8) -> u8 {
     // SAFETY: the result of casting a reference to a pointer is valid; the type is Copy.
     unsafe { core::ptr::read_volatile(&value) }
 }
 
 #[inline]
+#[must_use]
 fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
     assert!(a.len() == b.len());
 
