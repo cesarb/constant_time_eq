@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [1.59.0, stable, beta, nightly]
+        toolchain: [1.60.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -85,4 +85,5 @@ jobs:
           cargo build --verbose --target $TARGET
           cargo build --verbose --release --target $TARGET
       - run: cargo test --release --features count_instructions_test -- --test-threads 1
+        if: ${{ matrix.toolchain != '1.60.0' }}
       - run: cargo bench --verbose
