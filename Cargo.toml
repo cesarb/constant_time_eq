@@ -14,7 +14,7 @@ rust-version = "1.59"
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["cargo_bench_support", "html_reports"] }
-count_instructions = "0.1.0"
+count_instructions = "0.1.1"
 
 [features]
 # Test-only feature for CI. Do not use.
