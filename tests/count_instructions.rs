@@ -121,4 +121,47 @@ mod tests {
     fn count_instructions_test_n_64() -> Result<()> {
         count_instructions_test_n::<64>()
     }
+
+    // This silly test shows that count_instructions() can detect early returns.
+    #[test]
+    fn count_instructions_test_variable() -> Result<()> {
+        #[inline(never)]
+        fn variable_time_eq(a: &[u8], b: &[u8]) -> bool {
+            if a.len() != b.len() {
+                false
+            } else {
+                for i in 0..a.len() {
+                    if a[i] != b[i] {
+                        return false;
+                    }
+                }
+                true
+            }
+        }
+
+        #[inline(never)]
+        fn count_variable(l: &[u8], r: &[u8], capacity: usize) -> Result<Vec<Address>> {
+            let mut addresses = Vec::with_capacity(capacity);
+            assert!(!count_instructions(
+                || variable_time_eq(black_box(l), black_box(r)),
+                |instruction| addresses.push(instruction.address())
+            )?);
+            Ok(addresses)
+        }
+
+        const N: usize = 64;
+        let l = vec![b'A'; N];
+        let r = vec![b'B'; N];
+
+        let mut t = r.clone();
+        t[0] = b'A';
+        let short = count_variable(&l, &t, 0)?;
+
+        let mut t = l.clone();
+        t[N - 1] = b'B';
+        let long = count_variable(&l, &t, short.len())?;
+
+        assert_ne!(short, long);
+        Ok(())
+    }
 }
