@@ -1,6 +1,10 @@
+# 0.2.6
+
+* New tests using the count_instructions crate; no functional changes.
+
 # 0.2.5
 
-* Add #[must_use] to all functions
+* Add #[must_use] to all functions.
 
 # 0.2.4
 
