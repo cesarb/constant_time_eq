@@ -1,6 +1,5 @@
 #[cfg(feature = "count_instructions_test")]
 mod tests {
-    use std::hint::black_box;
     use std::io::Result;
 
     use constant_time_eq::{constant_time_eq, constant_time_eq_n};
@@ -8,8 +7,6 @@ mod tests {
 
     #[inline(never)]
     fn count(l: &[u8], r: &[u8], capacity: usize) -> Result<Vec<Address>> {
-        let l = black_box(l);
-        let r = black_box(r);
         let mut addresses = Vec::with_capacity(capacity);
         assert!(!count_instructions(
             || constant_time_eq(l, r),
@@ -20,8 +17,6 @@ mod tests {
 
     #[inline(never)]
     fn count_n<const N: usize>(l: &[u8; N], r: &[u8; N], capacity: usize) -> Result<Vec<Address>> {
-        let l = black_box(l);
-        let r = black_box(r);
         let mut addresses = Vec::with_capacity(capacity);
         assert!(!count_instructions(
             || constant_time_eq_n(l, r),
@@ -145,8 +140,6 @@ mod tests {
 
         #[inline(never)]
         fn count_variable(l: &[u8], r: &[u8], capacity: usize) -> Result<Vec<Address>> {
-            let l = black_box(l);
-            let r = black_box(r);
             let mut addresses = Vec::with_capacity(capacity);
             assert!(!count_instructions(
                 || variable_time_eq(l, r),
