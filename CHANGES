@@ -1,3 +1,10 @@
+# 0.3.0
+
+* Use black_box instead of volatile read when inline assembly is not
+  available.
+* Increase minimum Rust version to 1.66, which is when black_box was
+  stabilized.
+
 # 0.2.6
 
 * New tests using the count_instructions crate; no functional changes.
