@@ -17,9 +17,9 @@ fn optimizer_hide(mut value: u8) -> u8 {
     target_arch = "riscv32",
     target_arch = "riscv64"
 ))]
-#[allow(asm_sub_register)]
 #[inline]
 #[must_use]
+#[allow(asm_sub_register)]
 fn optimizer_hide(mut value: u8) -> u8 {
     // SAFETY: the input value is passed unchanged to the output, the inline assembly does nothing.
     unsafe {
@@ -36,11 +36,21 @@ fn optimizer_hide(mut value: u8) -> u8 {
     target_arch = "riscv32",
     target_arch = "riscv64"
 )))]
-#[inline(never)] // This function is non-inline to prevent the optimizer from looking inside it.
+#[inline(never)]
 #[must_use]
 fn optimizer_hide(value: u8) -> u8 {
-    // SAFETY: the result of casting a reference to a pointer is valid; the type is Copy.
-    unsafe { core::ptr::read_volatile(&value) }
+    // The current implementation of black_box in the main codegen backends is similar to
+    // {
+    //     let result = value;
+    //     asm!("", in(reg) &result);
+    //     result
+    // }
+    // which round-trips the value through the stack, instead of leaving it in a register.
+    // Experimental codegen backends might implement black_box as a pure identity function,
+    // without the expected optimization barrier, so it's less guaranteed than inline asm.
+    // For that reason, we also use the #[inline(never)] hint, which makes it harder for an
+    // optimizer to look inside this function.
+    core::hint::black_box(value)
 }
 
 #[inline]
@@ -108,7 +118,6 @@ fn constant_time_ne_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> u8 {
 /// assert!(constant_time_eq_n(&[3; 20], &[3; 20]));
 /// assert!(!constant_time_eq_n(&[3; 20], &[7; 20]));
 /// ```
-#[inline]
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
     constant_time_ne_n(a, b) == 0

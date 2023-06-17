@@ -84,5 +84,5 @@ jobs:
           rustup target add $TARGET
           cargo build --verbose --target $TARGET
           cargo build --verbose --release --target $TARGET
-      - run: cargo test --release --features count_instructions_test
+      - run: cargo test --verbose --release --features count_instructions_test
       - run: cargo bench --verbose
