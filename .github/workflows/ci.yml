@@ -86,3 +86,24 @@ jobs:
           cargo build --verbose --release --target $TARGET
       - run: cargo test --verbose --release --features count_instructions_test
       - run: cargo bench --verbose
+
+  miri:
+    name: Run tests under Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+      - run: rustup toolchain install nightly --profile=minimal --no-self-update
+      - run: rustup default nightly
+      - run: rustup override set nightly
+      - run: rustup component add miri
+      - run: rustc --verbose --version
+      - run: cargo --verbose --version
+      - run: cargo miri test --verbose
