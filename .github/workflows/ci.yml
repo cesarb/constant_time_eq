@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [1.68.0, stable, beta, nightly]
+        toolchain: [1.74.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
