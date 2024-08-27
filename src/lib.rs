@@ -1,6 +1,7 @@
 #![no_std]
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(miri))]
 #[inline]
 #[must_use]
 fn optimizer_hide(mut value: u8) -> u8 {
@@ -17,6 +18,7 @@ fn optimizer_hide(mut value: u8) -> u8 {
     target_arch = "riscv32",
     target_arch = "riscv64"
 ))]
+#[cfg(not(miri))]
 #[inline]
 #[must_use]
 #[allow(asm_sub_register)]
@@ -28,14 +30,17 @@ fn optimizer_hide(mut value: u8) -> u8 {
     }
 }
 
-#[cfg(not(any(
-    target_arch = "x86",
-    target_arch = "x86_64",
-    target_arch = "arm",
-    target_arch = "aarch64",
-    target_arch = "riscv32",
-    target_arch = "riscv64"
-)))]
+#[cfg(any(
+    not(any(
+        target_arch = "x86",
+        target_arch = "x86_64",
+        target_arch = "arm",
+        target_arch = "aarch64",
+        target_arch = "riscv32",
+        target_arch = "riscv64",
+    )),
+    miri,
+))]
 #[inline(never)]
 #[must_use]
 fn optimizer_hide(value: u8) -> u8 {
