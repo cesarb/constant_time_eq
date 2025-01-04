@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [1.74.0, stable, beta, nightly]
+        toolchain: [1.82.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -63,9 +63,16 @@ jobs:
           rustup target add $TARGET
           cargo build --verbose --target $TARGET
           cargo build --verbose --release --target $TARGET
-      - name: Cross-compile riscv32imac-unknown-none-elf
+      - name: Cross-compile riscv32imafc-unknown-none-elf
         env:
-          TARGET: riscv32imac-unknown-none-elf
+          TARGET: riscv32imafc-unknown-none-elf
+        run: |
+          rustup target add $TARGET
+          cargo build --verbose --target $TARGET
+          cargo build --verbose --release --target $TARGET
+      - name: Cross-compile loongarch64_unknown_linux_gnu
+        env:
+          TARGET: loongarch64_unknown_linux_gnu
         run: |
           rustup target add $TARGET
           cargo build --verbose --target $TARGET
@@ -77,16 +84,7 @@ jobs:
           rustup target add $TARGET
           cargo build --verbose --target $TARGET
           cargo build --verbose --release --target $TARGET
-      - name: Cross-compile wasm32-wasi
-        if: ${{ matrix.toolchain == '1.74.0' }}
-        env:
-          TARGET: wasm32-wasi
-        run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --release --target $TARGET
       - name: Cross-compile wasm32-wasip1
-        if: ${{ matrix.toolchain != '1.74.0' }}
         env:
           TARGET: wasm32-wasip1
         run: |

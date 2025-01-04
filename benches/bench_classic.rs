@@ -1,9 +1,9 @@
-use constant_time_eq::{constant_time_eq, constant_time_eq_n};
+use constant_time_eq::classic::{constant_time_eq, constant_time_eq_n};
 use core::hint::black_box;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn bench_array(c: &mut Criterion) {
-    let mut group = c.benchmark_group("constant_time_eq_n");
+    let mut group = c.benchmark_group("classic::constant_time_eq_n");
 
     let input = (&[1; 16], &[2; 16]);
     group.throughput(Throughput::Bytes(16));
@@ -33,7 +33,7 @@ fn bench_array(c: &mut Criterion) {
 }
 
 fn bench_slice(c: &mut Criterion) {
-    let mut group = c.benchmark_group("constant_time_eq");
+    let mut group = c.benchmark_group("classic::constant_time_eq");
 
     let input = (&[1; 65536], &[2; 65536]);
     for &size in &[16, 20, 32, 64, 4 * 1024, 16 * 1024, 64 * 1024] {
