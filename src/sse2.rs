@@ -171,115 +171,104 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
 
         // SAFETY: this file is compiled only when SSE2 is available
         // SAFETY: at least 256 bits are in bounds for both pointers
-        mask0 = unsafe {
-            cmpeq_epi8(
-                _mm_loadu_si128(a as *const __m128i),
-                _mm_loadu_si128(b as *const __m128i),
-            )
-        };
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 256 bits are in bounds for both pointers
-        mask1 = unsafe {
-            cmpeq_epi8(
-                _mm_loadu_si128(a.add(LANES) as *const __m128i),
-                _mm_loadu_si128(b.add(LANES) as *const __m128i),
-            )
-        };
-
-        // SAFETY: at least 256 bits are in bounds for both pointers
         unsafe {
+            let tmpa0 = _mm_loadu_si128(a as *const __m128i);
+            let tmpb0 = _mm_loadu_si128(b as *const __m128i);
+            let tmpa1 = _mm_loadu_si128(a.add(LANES) as *const __m128i);
+            let tmpb1 = _mm_loadu_si128(b.add(LANES) as *const __m128i);
+
             a = a.add(LANES * 2);
             b = b.add(LANES * 2);
+            n -= LANES * 2;
+
+            mask0 = cmpeq_epi8(tmpa0, tmpb0);
+            mask1 = cmpeq_epi8(tmpa1, tmpb1);
         }
-        n -= LANES * 2;
 
         while n >= LANES * 2 {
             // SAFETY: this file is compiled only when SSE2 is available
             // SAFETY: at least 256 bits are in bounds for both pointers
-            mask0 = unsafe {
-                and_si128(
-                    mask0,
-                    cmpeq_epi8(
-                        _mm_loadu_si128(a as *const __m128i),
-                        _mm_loadu_si128(b as *const __m128i),
-                    ),
-                )
-            };
-            // SAFETY: this file is compiled only when SSE2 is available
-            // SAFETY: at least 256 bits are in bounds for both pointers
-            mask1 = unsafe {
-                and_si128(
-                    mask1,
-                    cmpeq_epi8(
-                        _mm_loadu_si128(a.add(LANES) as *const __m128i),
-                        _mm_loadu_si128(b.add(LANES) as *const __m128i),
-                    ),
-                )
-            };
-
-            // SAFETY: at least 256 bits are in bounds for both pointers
             unsafe {
+                let tmpa0 = _mm_loadu_si128(a as *const __m128i);
+                let tmpb0 = _mm_loadu_si128(b as *const __m128i);
+                let tmpa1 = _mm_loadu_si128(a.add(LANES) as *const __m128i);
+                let tmpb1 = _mm_loadu_si128(b.add(LANES) as *const __m128i);
+
                 a = a.add(LANES * 2);
                 b = b.add(LANES * 2);
+                n -= LANES * 2;
+
+                let tmp0 = cmpeq_epi8(tmpa0, tmpb0);
+                let tmp1 = cmpeq_epi8(tmpa1, tmpb1);
+
+                mask0 = and_si128(mask0, tmp0);
+                mask1 = and_si128(mask1, tmp1);
             }
-            n -= LANES * 2;
         }
 
         if n >= LANES {
             // SAFETY: this file is compiled only when SSE2 is available
             // SAFETY: at least 128 bits are in bounds for both pointers
-            mask0 = unsafe {
-                and_si128(
-                    mask0,
-                    cmpeq_epi8(
-                        _mm_loadu_si128(a as *const __m128i),
-                        _mm_loadu_si128(b as *const __m128i),
-                    ),
-                )
-            };
-
-            // SAFETY: at least 128 bits are in bounds for both pointers
             unsafe {
+                let tmpa = _mm_loadu_si128(a as *const __m128i);
+                let tmpb = _mm_loadu_si128(b as *const __m128i);
+
                 a = a.add(LANES);
                 b = b.add(LANES);
+                n -= LANES;
+
+                let tmp = cmpeq_epi8(tmpa, tmpb);
+
+                mask0 = and_si128(mask0, tmp);
             }
-            n -= LANES;
         }
 
         if n > 0 {
-            // SAFETY: this file is compiled only when SSE2 is available
             // SAFETY: at least n bytes are in bounds for both pointers
-            mask1 =
-                unsafe { and_si128(mask1, cmpeq_epi8(loadu_partial(a, n), loadu_partial(b, n))) };
+            unsafe {
+                let tmpa = loadu_partial(a, n);
+                let tmpb = loadu_partial(b, n);
+
+                let tmp = cmpeq_epi8(tmpa, tmpb);
+
+                mask1 = and_si128(mask1, tmp);
+            }
         }
 
         mask = and_si128(mask0, mask1);
     } else if n >= LANES {
         // SAFETY: this file is compiled only when SSE2 is available
         // SAFETY: at least 128 bits are in bounds for both pointers
-        mask = unsafe {
-            cmpeq_epi8(
-                _mm_loadu_si128(a as *const __m128i),
-                _mm_loadu_si128(b as *const __m128i),
-            )
-        };
-
-        // SAFETY: at least 128 bits are in bounds for both pointers
         unsafe {
+            let tmpa = _mm_loadu_si128(a as *const __m128i);
+            let tmpb = _mm_loadu_si128(b as *const __m128i);
+
             a = a.add(LANES);
             b = b.add(LANES);
+            n -= LANES;
+
+            mask = cmpeq_epi8(tmpa, tmpb);
         }
-        n -= LANES;
 
         if n > 0 {
-            // SAFETY: this file is compiled only when SSE2 is available
             // SAFETY: at least n bytes are in bounds for both pointers
-            mask = unsafe { and_si128(mask, cmpeq_epi8(loadu_partial(a, n), loadu_partial(b, n))) };
+            unsafe {
+                let tmpa = loadu_partial(a, n);
+                let tmpb = loadu_partial(b, n);
+
+                let tmp = cmpeq_epi8(tmpa, tmpb);
+
+                mask = and_si128(mask, tmp);
+            }
         }
     } else if n > 0 {
-        // SAFETY: this file is compiled only when SSE2 is available
         // SAFETY: at least n bytes are in bounds for both pointers
-        mask = unsafe { cmpeq_epi8(loadu_partial(a, n), loadu_partial(b, n)) };
+        unsafe {
+            let tmpa = loadu_partial(a, n);
+            let tmpb = loadu_partial(b, n);
+
+            mask = cmpeq_epi8(tmpa, tmpb);
+        }
     } else {
         return true;
     }

@@ -80,16 +80,16 @@ unsafe fn constant_time_eq_impl(mut a: *const u8, mut b: *const u8, mut n: usize
         n: &mut usize,
     ) -> T {
         // SAFETY: enough bytes are within bounds for both pointers; all bit patterns are valid
-        let tmp = unsafe { read_unaligned(*a as *const T) ^ read_unaligned(*b as *const T) };
-
-        // SAFETY: enough bytes are within bounds for both pointers
         unsafe {
+            let tmpa = read_unaligned(*a as *const T);
+            let tmpb = read_unaligned(*b as *const T);
+
             *a = a.add(size_of::<T>());
             *b = b.add(size_of::<T>());
-        }
-        *n -= size_of::<T>();
+            *n -= size_of::<T>();
 
-        tmp
+            tmpa ^ tmpb
+        }
     }
 
     // The optimizer is not allowed to assume anything about the value of tmp after each iteration,
