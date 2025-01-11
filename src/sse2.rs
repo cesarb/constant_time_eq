@@ -276,38 +276,12 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
     movemask_epi8(mask) == 0xFFFF
 }
 
-/// Compares two equal-sized byte strings in constant time.
-///
-/// # Examples
-///
-/// ```
-/// use constant_time_eq::constant_time_eq;
-///
-/// assert!(constant_time_eq(b"foo", b"foo"));
-/// assert!(!constant_time_eq(b"foo", b"bar"));
-/// assert!(!constant_time_eq(b"bar", b"baz"));
-/// # assert!(constant_time_eq(b"", b""));
-///
-/// // Not equal-sized, so won't take constant time.
-/// assert!(!constant_time_eq(b"foo", b""));
-/// assert!(!constant_time_eq(b"foo", b"quux"));
-/// ```
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     // SAFETY: both pointers point to the same number of bytes
     a.len() == b.len() && unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), a.len()) }
 }
 
-/// Compares two fixed-size byte strings in constant time.
-///
-/// # Examples
-///
-/// ```
-/// use constant_time_eq::constant_time_eq_n;
-///
-/// assert!(constant_time_eq_n(&[3; 20], &[3; 20]));
-/// assert!(!constant_time_eq_n(&[3; 20], &[7; 20]));
-/// ```
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
     // SAFETY: both pointers point to N bytes
