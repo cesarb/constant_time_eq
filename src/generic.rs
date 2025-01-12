@@ -3,7 +3,7 @@ use core::ops::BitXor;
 use core::ptr::read_unaligned;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
-type Word = usize;
+pub(crate) type Word = usize;
 
 /// Hides a value from the optimizer.
 #[cfg(all(
@@ -69,7 +69,17 @@ fn optimizer_hide(value: Word) -> Word {
 /// At least n bytes must be in bounds for both pointers.
 #[must_use]
 #[inline(always)]
-unsafe fn constant_time_eq_impl(mut a: *const u8, mut b: *const u8, mut n: usize) -> bool {
+pub(crate) unsafe fn constant_time_eq_impl(
+    mut a: *const u8,
+    mut b: *const u8,
+    mut n: usize,
+    mut tmp: Word,
+) -> bool {
+    // Early exit for the common case when called by the SIMD code.
+    if n == 0 {
+        return tmp == 0;
+    }
+
     /// Reads and compares a single word from the input, adjusting the pointers and counter.
     /// Returns zero if both words are equal, non-zero if any byte is different.
     ///
@@ -98,7 +108,6 @@ unsafe fn constant_time_eq_impl(mut a: *const u8, mut b: *const u8, mut n: usize
 
     // The optimizer is not allowed to assume anything about the value of tmp after each iteration,
     // which prevents it from terminating the loop early if the value becomes non-zero or all-ones.
-    let mut tmp = 0;
 
     while n >= size_of::<Word>() {
         // SAFETY: enough bytes for Word are within bounds; all bit patterns are valid for Word
@@ -148,7 +157,7 @@ unsafe fn constant_time_eq_impl(mut a: *const u8, mut b: *const u8, mut n: usize
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     // SAFETY: both pointers point to the same number of bytes
-    a.len() == b.len() && unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len()) }
+    a.len() == b.len() && unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), 0) }
 }
 
 /// Compares two fixed-size byte strings in constant time.
@@ -164,7 +173,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
     // SAFETY: both pointers point to N bytes
-    unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), N) }
+    unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), N, 0) }
 }
 
 #[cfg(test)]

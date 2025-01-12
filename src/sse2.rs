@@ -83,13 +83,14 @@ fn and_si128(a: __m128i, b: __m128i) -> __m128i {
 /// constant time (for instance, looping through the elements of the vector).
 #[must_use]
 #[inline(always)]
-fn movemask_epi8(a: __m128i) -> i32 {
+fn movemask_epi8(a: __m128i) -> u32 {
     let mut mask;
     // When AVX is available, the compiler will use the VEX prefix for all
     // SIMD instructions; do the same for this inline assembly.
     if cfg!(target_feature = "avx") {
         // SAFETY: used only when AVX is available
         // SAFETY: assembly instruction touches only these registers
+        // SAFETY: 32-bit operations zero-extend the 64-bit register
         unsafe {
             asm!("vpmovmskb {mask:e}, {a}",
                 mask = lateout(reg) mask,
@@ -99,6 +100,7 @@ fn movemask_epi8(a: __m128i) -> i32 {
     } else {
         // SAFETY: this file is compiled only when SSE2 is available
         // SAFETY: assembly instruction touches only these registers
+        // SAFETY: 32-bit operations zero-extend the 64-bit register
         unsafe {
             asm!("pmovmskb {mask:e}, {a}",
                 mask = lateout(reg) mask,
@@ -106,51 +108,8 @@ fn movemask_epi8(a: __m128i) -> i32 {
                 options(pure, nomem, preserves_flags, nostack));
         }
     }
+    // The return type is u32 instead of i32 to avoid a sign extension.
     mask
-}
-
-/// Loads a partial vector, possibly duplicating some lanes.
-///
-/// # Safety
-///
-/// At least n bytes must be in bounds for the pointer.
-#[must_use]
-#[inline(always)]
-unsafe fn loadu_partial(addr: *const u8, n: usize) -> __m128i {
-    debug_assert!(n <= size_of::<__m128i>());
-
-    if n > 64 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least n bytes (n > 8) are in bounds for the pointer
-        unsafe { _mm_unpacklo_epi64(_mm_loadu_si64(addr), _mm_loadu_si64(addr.add(n - (64 / 8)))) }
-    } else if n == 64 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 8 bytes are in bounds for the pointer
-        unsafe { _mm_loadu_si64(addr) }
-    } else if n > 32 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least n bytes (n > 4) are in bounds for the pointer
-        unsafe { _mm_unpacklo_epi32(_mm_loadu_si32(addr), _mm_loadu_si32(addr.add(n - (32 / 8)))) }
-    } else if n == 32 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 4 bytes are in bounds for the pointer
-        unsafe { _mm_loadu_si32(addr) }
-    } else if n > 16 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least n bytes (n > 2) are in bounds for the pointer
-        unsafe { _mm_unpacklo_epi16(_mm_loadu_si16(addr), _mm_loadu_si16(addr.add(n - (16 / 8)))) }
-    } else if n == 16 / 8 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 2 bytes are in bounds for the pointer
-        unsafe { _mm_loadu_si16(addr) }
-    } else if n > 0 {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 1 byte is in bounds for the pointer
-        unsafe { _mm_set_epi64x(0, (*addr).into()) }
-    } else {
-        // SAFETY: this file is compiled only when SSE2 is available
-        unsafe { _mm_setzero_si128() }
-    }
 }
 
 /// SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
@@ -163,9 +122,7 @@ unsafe fn loadu_partial(addr: *const u8, n: usize) -> __m128i {
 unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize) -> bool {
     const LANES: usize = size_of::<__m128i>();
 
-    let mut mask;
-
-    if n >= LANES * 2 {
+    let tmp = if n >= LANES * 2 {
         let mut mask0;
         let mut mask1;
 
@@ -223,23 +180,12 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
             }
         }
 
-        if n > 0 {
-            // SAFETY: at least n bytes are in bounds for both pointers
-            unsafe {
-                let tmpa = loadu_partial(a, n);
-                let tmpb = loadu_partial(b, n);
-
-                let tmp = cmpeq_epi8(tmpa, tmpb);
-
-                mask1 = and_si128(mask1, tmp);
-            }
-        }
-
-        mask = and_si128(mask0, mask1);
+        let mask = and_si128(mask0, mask1);
+        movemask_epi8(mask) ^ 0xFFFF
     } else if n >= LANES {
         // SAFETY: this file is compiled only when SSE2 is available
         // SAFETY: at least 128 bits are in bounds for both pointers
-        unsafe {
+        let mask = unsafe {
             let tmpa = _mm_loadu_si128(a as *const __m128i);
             let tmpb = _mm_loadu_si128(b as *const __m128i);
 
@@ -247,33 +193,16 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
             b = b.add(LANES);
             n -= LANES;
 
-            mask = cmpeq_epi8(tmpa, tmpb);
-        }
+            cmpeq_epi8(tmpa, tmpb)
+        };
 
-        if n > 0 {
-            // SAFETY: at least n bytes are in bounds for both pointers
-            unsafe {
-                let tmpa = loadu_partial(a, n);
-                let tmpb = loadu_partial(b, n);
-
-                let tmp = cmpeq_epi8(tmpa, tmpb);
-
-                mask = and_si128(mask, tmp);
-            }
-        }
-    } else if n > 0 {
-        // SAFETY: at least n bytes are in bounds for both pointers
-        unsafe {
-            let tmpa = loadu_partial(a, n);
-            let tmpb = loadu_partial(b, n);
-
-            mask = cmpeq_epi8(tmpa, tmpb);
-        }
+        movemask_epi8(mask) ^ 0xFFFF
     } else {
-        return true;
-    }
+        0
+    } as crate::generic::Word;
 
-    movemask_epi8(mask) == 0xFFFF
+    // SAFETY: at least n bytes are in bounds for both pointers
+    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp) }
 }
 
 #[must_use]
