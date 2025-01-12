@@ -8,30 +8,70 @@ use core::arch::arm::*;
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::*;
 
+/// Equivalent to vceqq_u8, but hidden from the compiler.
+///
+/// The use of inline assembly instead of an intrinsic prevents a sufficiently
+/// smart compiler from computing the mask in other ways which might not be
+/// constant time (for instance, looping through the input and using branching
+/// to set the vector elements).
 #[must_use]
 #[inline(always)]
-#[cfg(target_arch = "aarch64")]
 fn vceqq_u8_hide(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     let mut c;
-    c = unsafe { vceqq_u8(a, b) }; // TODO asm!
+    // SAFETY: this file is compiled only when NEON is available
+    // SAFETY: assembly instruction touches only these registers
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        asm!("cmeq {c:v}.16b, {a:v}.16b, {b:v}.16b",
+            c = lateout(vreg) c,
+            a = in(vreg) a,
+            b = in(vreg) b,
+            options(pure, nomem, preserves_flags, nostack));
+    }
     c
 }
 
+/// Equivalent to vandq_u8, but hidden from the compiler.
+///
+/// The use of inline assembly instead of an intrinsic prevents a sufficiently
+/// smart compiler from short circuiting the computation once the mask becomes
+/// all zeros.
 #[must_use]
 #[inline(always)]
-#[cfg(target_arch = "aarch64")]
 fn vandq_u8_hide(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     let mut c;
-    c = unsafe { vandq_u8(a, b) }; // TODO asm!
+    // SAFETY: this file is compiled only when NEON is available
+    // SAFETY: assembly instruction touches only these registers
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        asm!("and {c:v}.16b, {a:v}.16b, {b:v}.16b",
+            c = lateout(vreg) c,
+            a = in(vreg) a,
+            b = in(vreg) b,
+            options(pure, nomem, preserves_flags, nostack));
+    }
     c
 }
 
+/// Equivalent to vshrn_n_u16(..., 4), but hidden from the compiler.
+///
+/// The use of inline assembly instead of an intrinsic prevents a sufficiently
+/// smart compiler from extracting the mask in other ways which might not be
+/// constant time (for instance, looping through the elements of the vector).
 #[must_use]
 #[inline(always)]
-#[cfg(target_arch = "aarch64")]
 fn vshrn_n_u16_4_hide(a: uint16x8_t) -> uint8x8_t {
     let mut mask;
-    mask = unsafe { vshrn_n_u16(a, 4) }; // TODO asm!
+    // SAFETY: this file is compiled only when NEON is available
+    // SAFETY: assembly instruction touches only these registers
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        asm!("shrn {mask:v}.8b, {a:v}.8h, #{n}",
+            mask = lateout(vreg) mask,
+            a = in(vreg) a,
+            n = const 4,
+            options(pure, nomem, preserves_flags, nostack));
+    }
     mask
 }
 

@@ -20,11 +20,11 @@ where
     for i in 0..n {
         for m in [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80] {
             a[i] ^= m;
-            assert!(!cteq(a, b), "len={} a[{}] mask {}", n, i, m);
+            assert!(!cteq(a, b), "len={} a[{}] mask 0x{:02x}", n, i, m);
             a[i] ^= m;
 
             b[i] ^= m;
-            assert!(!cteq(a, b), "len={} b[{}] mask {}", n, i, m);
+            assert!(!cteq(a, b), "len={} b[{}] mask 0x{:02x}", n, i, m);
             b[i] ^= m;
         }
     }
