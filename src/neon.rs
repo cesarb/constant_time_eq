@@ -1,6 +1,4 @@
 use core::arch::asm;
-use core::mem::size_of;
-use core::ptr::read_unaligned;
 
 #[cfg(target_arch = "arm")]
 use core::arch::arm::*;
@@ -75,93 +73,15 @@ fn vshrn_n_u16_4_hide(a: uint16x8_t) -> uint8x8_t {
     mask
 }
 
-/// Loads a partial vector, possibly duplicating some lanes.
-///
-/// # Safety
-///
-/// At least n bytes must be in bounds for the pointer.
+/// Moves a mask created by vceqq_u8 to a u64 register, with each all-zero or
+/// all-ones mask byte represented as an all-zero or all-ones half-byte.
 #[must_use]
 #[inline(always)]
-unsafe fn vld1q_u8_partial(ptr: *const u8, n: usize) -> uint8x16_t {
-    debug_assert!(n <= 16);
-
-    #[must_use]
-    #[inline(always)]
-    unsafe fn load_unaligned<T>(ptr: *const u8) -> uint8x16_t
-    where
-        T: Into<u64>,
-    {
-        // TODO safety comment
-        unsafe {
-            vcombine_u8(
-                vcreate_u8(read_unaligned(ptr as *const T).into()),
-                vcreate_u8(0),
-            )
-        }
-    }
-
-    #[must_use]
-    #[inline(always)]
-    unsafe fn load_unaligned_pair<A, B>(ptr: *const u8) -> uint8x16_t
-    where
-        A: Into<u64>,
-        B: Into<u64>,
-    {
-        // TODO safety comment
-        unsafe {
-            let a = read_unaligned(ptr as *const A).into();
-            let b = read_unaligned(ptr.add(size_of::<A>()) as *const B).into();
-            let c = a | (b << (size_of::<A>() * 8));
-            vcombine_u8(vcreate_u8(c), vcreate_u8(0))
-        }
-    }
-
-    match n {
-        9.. => {
-            // TODO safety comment
-            unsafe { vcombine_u8(vld1_u8(ptr), vld1_u8(ptr.add(n - 8))) }
-        }
-        8 => {
-            // TODO safety comment
-            unsafe { vcombine_u8(vld1_u8(ptr), vcreate_u8(0)) }
-        }
-        7 => {
-            // TODO safety comment
-            unsafe {
-                vcombine_u8(
-                    vcreate_u8(read_unaligned(ptr as *const u32).into()),
-                    vcreate_u8(read_unaligned(ptr.add(n - 4) as *const u32).into()),
-                )
-            }
-        }
-        6 => {
-            // TODO safety comment
-            unsafe { load_unaligned_pair::<u32, u16>(ptr) }
-        }
-        5 => {
-            // TODO safety comment
-            unsafe { load_unaligned_pair::<u32, u8>(ptr) }
-        }
-        4 => {
-            // TODO safety comment
-            unsafe { load_unaligned::<u32>(ptr) }
-        }
-        3 => {
-            // TODO safety comment
-            unsafe { load_unaligned_pair::<u16, u8>(ptr) }
-        }
-        2 => {
-            // TODO safety comment
-            unsafe { load_unaligned::<u16>(ptr) }
-        }
-        1 => {
-            // TODO safety comment
-            unsafe { load_unaligned::<u8>(ptr) }
-        }
-        0 => {
-            // TODO safety comment
-            unsafe { vcombine_u8(vcreate_u8(0), vcreate_u8(0)) }
-        }
+fn get_mask_u64(mask: uint8x16_t) -> u64 {
+    // SAFETY: this file is compiled only when NEON is available
+    unsafe {
+        let mask = vshrn_n_u16_4_hide(vreinterpretq_u16_u8(mask));
+        vget_lane_u64(vreinterpret_u64_u8(mask), 0)
     }
 }
 
@@ -175,12 +95,12 @@ unsafe fn vld1q_u8_partial(ptr: *const u8, n: usize) -> uint8x16_t {
 unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize) -> bool {
     const LANES: usize = 16;
 
-    let mut mask;
-
-    if n >= LANES * 2 {
+    let tmp = if n >= LANES * 2 {
         let mut mask0;
         let mut mask1;
 
+        // SAFETY: this file is compiled only when NEON is available
+        // SAFETY: at least 256 bits are in bounds for both pointers
         unsafe {
             let tmpa = vld1q_u8_x2(a);
             let tmpb = vld1q_u8_x2(b);
@@ -194,6 +114,8 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
         }
 
         while n >= LANES * 2 {
+            // SAFETY: this file is compiled only when NEON is available
+            // SAFETY: at least 256 bits are in bounds for both pointers
             unsafe {
                 let tmpa = vld1q_u8_x2(a);
                 let tmpb = vld1q_u8_x2(b);
@@ -211,6 +133,8 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
         }
 
         if n >= LANES {
+            // SAFETY: this file is compiled only when NEON is available
+            // SAFETY: at least 128 bits are in bounds for both pointers
             unsafe {
                 let tmpa = vld1q_u8(a);
                 let tmpb = vld1q_u8(b);
@@ -225,20 +149,12 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
             }
         }
 
-        if n > 0 {
-            unsafe {
-                let tmpa = vld1q_u8_partial(a, n);
-                let tmpb = vld1q_u8_partial(b, n);
-
-                let tmp = vceqq_u8_hide(tmpa, tmpb);
-
-                mask1 = vandq_u8_hide(mask1, tmp);
-            }
-        }
-
-        mask = vandq_u8_hide(mask0, mask1);
+        let mask = vandq_u8_hide(mask0, mask1);
+        get_mask_u64(mask) ^ !0
     } else if n >= LANES {
-        unsafe {
+        // SAFETY: this file is compiled only when NEON is available
+        // SAFETY: at least 128 bits are in bounds for both pointers
+        let mask = unsafe {
             let tmpa = vld1q_u8(a);
             let tmpb = vld1q_u8(b);
 
@@ -246,34 +162,16 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
             b = b.add(LANES);
             n -= LANES;
 
-            mask = vceqq_u8_hide(tmpa, tmpb);
-        }
+            vceqq_u8_hide(tmpa, tmpb)
+        };
 
-        if n > 0 {
-            unsafe {
-                let tmpa = vld1q_u8_partial(a, n);
-                let tmpb = vld1q_u8_partial(b, n);
-
-                let tmp = vceqq_u8_hide(tmpa, tmpb);
-
-                mask = vandq_u8_hide(mask, tmp);
-            }
-        }
-    } else if n > 0 {
-        unsafe {
-            let tmpa = vld1q_u8_partial(a, n);
-            let tmpb = vld1q_u8_partial(b, n);
-
-            mask = vceqq_u8_hide(tmpa, tmpb);
-        }
+        get_mask_u64(mask) ^ !0
     } else {
-        return true;
-    }
+        0
+    };
 
-    unsafe {
-        let mask = vshrn_n_u16_4_hide(vreinterpretq_u16_u8(mask));
-        vget_lane_u64(vreinterpret_u64_u8(mask), 0) == !0
-    }
+    // SAFETY: at least n bytes are in bounds for both pointers
+    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp) }
 }
 
 #[must_use]

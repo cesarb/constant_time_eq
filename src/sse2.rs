@@ -199,10 +199,10 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
         movemask_epi8(mask) ^ 0xFFFF
     } else {
         0
-    } as crate::generic::Word;
+    };
 
     // SAFETY: at least n bytes are in bounds for both pointers
-    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp) }
+    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp.into()) }
 }
 
 #[must_use]

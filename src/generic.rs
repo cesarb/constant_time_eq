@@ -3,6 +3,23 @@ use core::ops::BitXor;
 use core::ptr::read_unaligned;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
+#[cfg(target_pointer_width = "64")]
+pub(crate) type Word = u64;
+
+/// The natural word type for this architecture. All bit patterns must be valid for this type.
+#[cfg(target_pointer_width = "32")]
+pub(crate) type Word = u32;
+
+/// The natural word type for this architecture. All bit patterns must be valid for this type.
+#[cfg(target_pointer_width = "16")]
+pub(crate) type Word = u16;
+
+/// The natural word type for this architecture. All bit patterns must be valid for this type.
+#[cfg(not(any(
+    target_pointer_width = "64",
+    target_pointer_width = "32",
+    target_pointer_width = "16"
+)))]
 pub(crate) type Word = usize;
 
 /// Hides a value from the optimizer.
@@ -109,11 +126,15 @@ pub(crate) unsafe fn constant_time_eq_impl(
     // The optimizer is not allowed to assume anything about the value of tmp after each iteration,
     // which prevents it from terminating the loop early if the value becomes non-zero or all-ones.
 
+    // Do most of the work using the natural word size; the other blocks clean up the leftovers.
     while n >= size_of::<Word>() {
         // SAFETY: enough bytes for Word are within bounds; all bit patterns are valid for Word
         tmp = optimizer_hide(tmp | unsafe { read_step::<Word>(&mut a, &mut b, &mut n) });
     }
 
+    // These first two blocks would only be necessary for architectures with usize > 64 bits.
+    // They are kept here for future-proofing, so that everything still works in that case.
+    // The optimizer tracks the range of n and will not generate any code for these blocks.
     while n >= size_of::<u128>() {
         // SAFETY: enough bytes for u128 are within bounds; all bit patterns are valid for u128
         tmp = optimizer_hide(tmp | unsafe { read_step::<u128>(&mut a, &mut b, &mut n) } as Word);
