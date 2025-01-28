@@ -1,7 +1,6 @@
-use core::arch::asm;
+//! NEON implementation of constant_time_eq and constant_time_eq_n.
 
-#[cfg(target_arch = "arm")]
-use core::arch::arm::*;
+use core::arch::asm;
 
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::*;
@@ -170,6 +169,7 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
         0
     };
 
+    // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
     // SAFETY: at least n bytes are in bounds for both pointers
     unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp) }
 }

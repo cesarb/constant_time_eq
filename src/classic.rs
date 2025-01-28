@@ -1,3 +1,11 @@
+//! Classic implementation of constant_time_eq and constant_time_eq_n
+//!
+//! This is the implementation from classic versions of this crate. Kept for benchmarking purposes
+//! only, since its protection against the optimizer is weaker: a sufficiently smart optimizer
+//! might notice that the accumulator will not change anymore once it becomes all-ones, and
+//! introduce an early exit. On the other hand, this weaker protection allows the optimizer to use
+//! vector registers to compare many bytes in parallel, without having to write explicit SIMD code.
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[cfg(not(miri))]
 #[inline]

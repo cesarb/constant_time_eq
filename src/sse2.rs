@@ -1,3 +1,9 @@
+//! SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
+//!
+//! Note: some microarchitectures split vector operations and/or vector registers larger than
+//! 128-bit, and might have optimizations for when one of the halves is all-zeros. To protect
+//! against that, only 128-bit vectors are used, even though larger vectors might be faster.
+
 use core::arch::asm;
 use core::mem::size_of;
 
@@ -201,6 +207,7 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
         0
     };
 
+    // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
     // SAFETY: at least n bytes are in bounds for both pointers
     unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp.into()) }
 }

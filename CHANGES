@@ -1,3 +1,37 @@
+# 0.4.0
+
+Previous versions of this crate protected against the optimizer doing an
+early exit when the accumulator becomes non-zero (found a difference),
+but not against a sufficiently smart optimizer doing an early exit when
+the accumulator has all bits set (the accumulator never clears a bit, so
+having all bits set means it will no longer change).
+
+Protecting against that also prevents autovectorization, so this release
+does manual vectorization to recover most of the speed lost. Where there
+is enough compiler support (stable vector intrinsics), it uses a mix of
+vector intrinsics and inline assembly for inputs which are a multiple of
+the vector size, while for other architectures and for the remainder of
+an input which is not a multiple of the vector size, it uses a generic
+word-at-a-time implementation with the native word size.
+
+This release is a candidate for becoming the 1.0 release. In preparation
+for that, it uses the 2024 edition, which enables the new resolver which
+will allow future updates to the set of architectures which can use the
+inline assembly implementation of optimizer_hide(), without breaking
+downstream crates (for instance, s390x and arm64ec were stabilized in
+Rust 1.84.0).
+
+* Rewrite the generic implementation to process one word at a time,
+  instead of byte by byte. Depending on the architecture, this means
+  8 bytes or 4 bytes processed on each loop iteration.
+* Use optimizer_hide() after each step, instead of just at the end.
+* Since optimizer_hide() now works on words, it no longer neeeds the
+  special case for byte sub-registers on x86 and x86_64.
+* Manual implementation for SSE2/AVX (x86 and x86_64), using 128-bit
+  vectors, processing up to 32 bytes on each loop iteration.
+* Manual implementation for NEON (aarch64 only for now), also using
+  128-bit vectors and processing up to 32 bytes on each loop iteration.
+
 # 0.3.1
 
 * Use the portable optimizer_hide() when running under Miri.

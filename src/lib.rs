@@ -1,3 +1,15 @@
+//! Compares two equal-sized byte strings in constant time.
+//!
+//! The time of the comparison does not depend on:
+//!
+//! * The contents of the inputs;
+//! * The position of the difference(s) between the inputs.
+//!
+//! The time of the comparison can depend on:
+//!
+//! * The memory addresses of the inputs;
+//! * The length of the inputs.
+
 #![no_std]
 #![warn(unsafe_op_in_unsafe_fn)]
 #![warn(clippy::undocumented_unsafe_blocks)]

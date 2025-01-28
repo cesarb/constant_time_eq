@@ -1,3 +1,14 @@
+//! Generic implementation of constant_time_eq and constant_time_eq_n.
+//!
+//! This implementation does SIMD in general-purpose registers instead of vector registers, and
+//! uses inline assembly only to hide the dependencies and comparisons from the optimizer, to
+//! prevent it from returning early when the accumulator becomes non-zero (found a difference) or
+//! all-ones (the accumulator can no longer change).
+//!
+//! This generic implementation is also used for suffixes smaller than one vector from the
+//! architecture-specific vector implementations. This is simpler and often faster than trying to
+//! load a partial vector register.
+
 use core::mem::size_of;
 use core::ops::BitXor;
 use core::ptr::read_unaligned;
@@ -37,8 +48,8 @@ pub(crate) type Word = usize;
         target_arch = "s390x",
     )
 ))]
-#[inline(always)]
 #[must_use]
+#[inline(always)]
 fn optimizer_hide(mut value: Word) -> Word {
     // SAFETY: the input value is passed unchanged to the output, the inline assembly does nothing.
     unsafe {
@@ -62,8 +73,8 @@ fn optimizer_hide(mut value: Word) -> Word {
         target_arch = "s390x",
     ))
 ))]
-#[inline(never)]
 #[must_use]
+#[inline(never)]
 fn optimizer_hide(value: Word) -> Word {
     // The current implementation of black_box in the main codegen backends is similar to
     // {
@@ -105,11 +116,13 @@ pub(crate) unsafe fn constant_time_eq_impl(
     /// Enough bytes must be in bounds for both pointers; all bit patterns must be valid for T.
     #[must_use]
     #[inline(always)]
-    unsafe fn read_step<T: BitXor<Output = T>>(
+    unsafe fn cmp_step<T: BitXor<Output = T>>(
         a: &mut *const u8,
         b: &mut *const u8,
         n: &mut usize,
     ) -> T {
+        debug_assert!(*n >= size_of::<T>());
+
         // SAFETY: enough bytes are within bounds for both pointers; all bit patterns are valid
         unsafe {
             let tmpa = read_unaligned(*a as *const T);
@@ -129,7 +142,8 @@ pub(crate) unsafe fn constant_time_eq_impl(
     // Do most of the work using the natural word size; the other blocks clean up the leftovers.
     while n >= size_of::<Word>() {
         // SAFETY: enough bytes for Word are within bounds; all bit patterns are valid for Word
-        tmp = optimizer_hide(tmp | unsafe { read_step::<Word>(&mut a, &mut b, &mut n) });
+        let cmp = optimizer_hide(unsafe { cmp_step::<Word>(&mut a, &mut b, &mut n) });
+        tmp = optimizer_hide(tmp | cmp);
     }
 
     // These first two blocks would only be necessary for architectures with usize > 64 bits.
@@ -137,23 +151,28 @@ pub(crate) unsafe fn constant_time_eq_impl(
     // The optimizer tracks the range of n and will not generate any code for these blocks.
     while n >= size_of::<u128>() {
         // SAFETY: enough bytes for u128 are within bounds; all bit patterns are valid for u128
-        tmp = optimizer_hide(tmp | unsafe { read_step::<u128>(&mut a, &mut b, &mut n) } as Word);
+        let cmp = optimizer_hide(unsafe { cmp_step::<u128>(&mut a, &mut b, &mut n) } as Word);
+        tmp = optimizer_hide(tmp | cmp);
     }
     if n >= size_of::<u64>() {
         // SAFETY: enough bytes for u64 are within bounds; all bit patterns are valid for u64
-        tmp = optimizer_hide(tmp | unsafe { read_step::<u64>(&mut a, &mut b, &mut n) } as Word);
+        let cmp = optimizer_hide(unsafe { cmp_step::<u64>(&mut a, &mut b, &mut n) } as Word);
+        tmp = optimizer_hide(tmp | cmp);
     }
     if n >= size_of::<u32>() {
         // SAFETY: enough bytes for u32 are within bounds; all bit patterns are valid for u32
-        tmp = optimizer_hide(tmp | unsafe { read_step::<u32>(&mut a, &mut b, &mut n) } as Word);
+        let cmp = optimizer_hide(unsafe { cmp_step::<u32>(&mut a, &mut b, &mut n) } as Word);
+        tmp = optimizer_hide(tmp | cmp);
     }
     if n >= size_of::<u16>() {
         // SAFETY: enough bytes for u16 are within bounds; all bit patterns are valid for u16
-        tmp = optimizer_hide(tmp | unsafe { read_step::<u16>(&mut a, &mut b, &mut n) } as Word);
+        let cmp = optimizer_hide(unsafe { cmp_step::<u16>(&mut a, &mut b, &mut n) } as Word);
+        tmp = optimizer_hide(tmp | cmp);
     }
     if n >= size_of::<u8>() {
         // SAFETY: enough bytes for u8 are within bounds; all bit patterns are valid for u8
-        tmp = optimizer_hide(tmp | unsafe { read_step::<u8>(&mut a, &mut b, &mut n) } as Word);
+        let cmp = optimizer_hide(unsafe { cmp_step::<u8>(&mut a, &mut b, &mut n) } as Word);
+        tmp = optimizer_hide(tmp | cmp);
     }
 
     tmp == 0
