@@ -1,8 +1,8 @@
 use constant_time_eq::classic::{constant_time_eq, constant_time_eq_n};
 use core::hint::black_box;
 use criterion::{
-    criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, BenchmarkId, Criterion,
-    Throughput,
+    BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main,
+    measurement::WallTime,
 };
 
 fn bench_array(c: &mut Criterion) {

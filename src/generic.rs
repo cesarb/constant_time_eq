@@ -224,7 +224,7 @@ mod tests {
     #[cfg(feature = "count_instructions_test")]
     #[test]
     fn count_optimizer_hide_instructions() -> std::io::Result<()> {
-        use super::{optimizer_hide, Word};
+        use super::{Word, optimizer_hide};
         use count_instructions::count_instructions;
 
         fn count() -> std::io::Result<usize> {

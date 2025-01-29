@@ -3,7 +3,7 @@ mod tests {
     use std::io::Result;
 
     use constant_time_eq::{constant_time_eq, constant_time_eq_n};
-    use count_instructions::{count_instructions, Address};
+    use count_instructions::{Address, count_instructions};
 
     #[inline(never)]
     fn count(l: &[u8], r: &[u8], capacity: usize) -> Result<Vec<Address>> {
