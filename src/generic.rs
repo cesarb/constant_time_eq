@@ -14,11 +14,17 @@ use core::ops::BitXor;
 use core::ptr::read_unaligned;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(
+    target_pointer_width = "64",
+    any(not(target_arch = "riscv64"), target_feature = "unaligned-scalar-mem")
+))]
 pub(crate) type Word = u64;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
-#[cfg(target_pointer_width = "32")]
+#[cfg(all(
+    target_pointer_width = "32",
+    any(not(target_arch = "riscv32"), target_feature = "unaligned-scalar-mem")
+))]
 pub(crate) type Word = u32;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
@@ -32,6 +38,14 @@ pub(crate) type Word = u16;
     target_pointer_width = "16"
 )))]
 pub(crate) type Word = usize;
+
+// RISC-V without unaligned-scalar-mem generates worse code for unaligned word reads.
+/// The natural word type for this architecture. All bit patterns must be valid for this type.
+#[cfg(all(
+    any(target_arch = "riscv64", target_arch = "riscv32"),
+    not(target_feature = "unaligned-scalar-mem")
+))]
+pub(crate) type Word = u8;
 
 /// Hides a value from the optimizer.
 #[cfg(all(
