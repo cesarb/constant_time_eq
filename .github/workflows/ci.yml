@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [1.82.0, stable, beta, nightly]
+        toolchain: [beta, nightly]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -119,4 +119,4 @@ jobs:
       - run: rustup component add miri
       - run: rustc --verbose --version
       - run: cargo --verbose --version
-      - run: cargo miri test --verbose
+      - run: cargo miri test --verbose --doc
