@@ -6,6 +6,8 @@
 //! introduce an early exit. On the other hand, this weaker protection allows the optimizer to use
 //! vector registers to compare many bytes in parallel, without having to write explicit SIMD code.
 
+use crate::with_dit;
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[cfg(not(miri))]
 #[inline]
@@ -102,7 +104,7 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 /// ```
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    a.len() == b.len() && constant_time_ne(a, b) == 0
+    with_dit(|| a.len() == b.len() && constant_time_ne(a, b) == 0)
 }
 
 // Fixed-size array variant.
@@ -131,7 +133,7 @@ fn constant_time_ne_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> u8 {
 /// ```
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    constant_time_ne_n(a, b) == 0
+    with_dit(|| constant_time_ne_n(a, b) == 0)
 }
 
 // Fixed-size variants for the most common sizes.

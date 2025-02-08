@@ -10,7 +10,7 @@
 //! * The memory addresses of the inputs;
 //! * The length of the inputs.
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unsafe_op_in_unsafe_fn)]
 #![warn(clippy::undocumented_unsafe_blocks)]
 
@@ -49,6 +49,22 @@ use neon as simd;
     all(target_arch = "aarch64", target_feature = "neon", not(miri))
 )))]
 use generic as simd;
+
+#[cfg(target_arch = "aarch64")]
+mod dit;
+
+#[cfg(target_arch = "aarch64")]
+use dit::with_dit;
+
+/// Runs code with the hardware DIT feature or equivalent enabled when possible.
+#[cfg(not(target_arch = "aarch64"))]
+#[inline(always)]
+pub(crate) fn with_dit<T, F>(f: F) -> T
+where
+    F: FnOnce() -> T,
+{
+    f()
+}
 
 /// Compares two equal-sized byte strings in constant time.
 ///

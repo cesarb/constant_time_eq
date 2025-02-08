@@ -5,6 +5,8 @@ use core::arch::asm;
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::*;
 
+use crate::with_dit;
+
 /// Equivalent to vceqq_u8, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
@@ -176,12 +178,16 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
 
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    // SAFETY: both pointers point to the same number of bytes
-    a.len() == b.len() && unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), a.len()) }
+    with_dit(|| {
+        // SAFETY: both pointers point to the same number of bytes
+        a.len() == b.len() && unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), a.len()) }
+    })
 }
 
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    // SAFETY: both pointers point to N bytes
-    unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), N) }
+    with_dit(|| {
+        // SAFETY: both pointers point to N bytes
+        unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), N) }
+    })
 }

@@ -56,6 +56,13 @@ jobs:
           rustup target add $TARGET
           cargo build --verbose --target $TARGET
           cargo build --verbose --release --target $TARGET
+      - name: Cross-compile aarch64-apple-darwin
+        env:
+          TARGET: aarch64-apple-darwin
+        run: |
+          rustup target add $TARGET
+          cargo build --verbose --target $TARGET
+          cargo build --verbose --release --target $TARGET
       - name: Cross-compile riscv64gc-unknown-linux-gnu
         env:
           TARGET: riscv64gc-unknown-linux-gnu

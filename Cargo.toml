@@ -17,6 +17,11 @@ criterion = { version = "0.5.1", features = ["cargo_bench_support", "html_report
 count_instructions = "0.1.3"
 
 [features]
+default = ["std"]
+
+# Necessary to detect at runtime whether DIT is available on aarch64.
+std = []
+
 # Enables tests which depend on the count_instructions crate.
 count_instructions_test = []
 

@@ -13,6 +13,8 @@ use core::mem::size_of;
 use core::ops::BitXor;
 use core::ptr::read_unaligned;
 
+use crate::with_dit;
+
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
 #[cfg(all(
     target_pointer_width = "64",
@@ -210,8 +212,10 @@ pub(crate) unsafe fn constant_time_eq_impl(
 /// ```
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    // SAFETY: both pointers point to the same number of bytes
-    a.len() == b.len() && unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), 0) }
+    with_dit(|| {
+        // SAFETY: both pointers point to the same number of bytes
+        a.len() == b.len() && unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), 0) }
+    })
 }
 
 /// Compares two fixed-size byte strings in constant time.
@@ -226,8 +230,10 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 /// ```
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    // SAFETY: both pointers point to N bytes
-    unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), N, 0) }
+    with_dit(|| {
+        // SAFETY: both pointers point to N bytes
+        unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), N, 0) }
+    })
 }
 
 #[cfg(test)]

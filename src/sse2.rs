@@ -13,6 +13,8 @@ use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
+use crate::with_dit;
+
 /// Equivalent to _mm_cmpeq_epi8, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
@@ -214,12 +216,16 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
 
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    // SAFETY: both pointers point to the same number of bytes
-    a.len() == b.len() && unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), a.len()) }
+    with_dit(|| {
+        // SAFETY: both pointers point to the same number of bytes
+        a.len() == b.len() && unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), a.len()) }
+    })
 }
 
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    // SAFETY: both pointers point to N bytes
-    unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), N) }
+    with_dit(|| {
+        // SAFETY: both pointers point to N bytes
+        unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), N) }
+    })
 }
