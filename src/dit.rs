@@ -117,6 +117,7 @@ fn synchronization_barrier() {
 /// # Safety
 ///
 /// FEAT_DIT and FEAT_SB must have been detected.
+#[inline]
 #[target_feature(enable = "dit,sb")]
 unsafe fn with_feat_dit_sb<T, F>(f: F) -> T
 where
@@ -153,6 +154,7 @@ where
 /// # Safety
 ///
 /// FEAT_DIT must have been detected.
+#[inline]
 #[target_feature(enable = "dit")]
 unsafe fn with_feat_dit<T, F>(f: F) -> T
 where
@@ -184,6 +186,7 @@ where
 }
 
 /// Runs code with the hardware DIT feature enabled when possible.
+#[inline]
 pub(crate) fn with_dit<T, F>(f: F) -> T
 where
     F: FnOnce() -> T,
@@ -193,13 +196,30 @@ where
     // generates better code.
     if is_feat_dit_implemented() {
         if is_feat_sb_implemented() {
-            // SAFETY: Both FEAT_DIT and FEAT_SB were detected.
+            // SAFETY: both FEAT_DIT and FEAT_SB were detected
             unsafe { with_feat_dit_sb(f) }
         } else {
-            // SAFETY: FEAT_DIT was detected.
+            // SAFETY: FEAT_DIT was detected
             unsafe { with_feat_dit(f) }
         }
     } else {
         f()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_feat_dit_implemented, rsr64_dit, with_dit};
+
+    #[test]
+    fn dit_is_restored_after_with_dit() {
+        if is_feat_dit_implemented() {
+            // SAFETY: FEAT_DIT was detected
+            unsafe {
+                let saved = rsr64_dit();
+                with_dit(|| assert_ne!(rsr64_dit(), 0));
+                assert_eq!(rsr64_dit(), saved);
+            }
+        }
     }
 }

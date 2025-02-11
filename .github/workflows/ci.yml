@@ -126,4 +126,4 @@ jobs:
       - run: rustup component add miri
       - run: rustc --verbose --version
       - run: cargo --verbose --version
-      - run: cargo miri test --verbose --doc
+      - run: cargo miri test --verbose

@@ -1,3 +1,5 @@
+#![cfg(not(miri))]
+
 use core::mem::size_of_val;
 use core::slice::from_raw_parts_mut;
 

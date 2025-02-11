@@ -1,3 +1,4 @@
+#[cfg(all(target_os = "linux", not(miri)))]
 #[cfg(feature = "count_instructions_test")]
 mod tests {
     use std::io::Result;

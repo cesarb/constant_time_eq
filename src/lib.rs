@@ -50,14 +50,14 @@ use neon as simd;
 )))]
 use generic as simd;
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(target_arch = "aarch64", not(miri)))]
 mod dit;
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(target_arch = "aarch64", not(miri)))]
 use dit::with_dit;
 
 /// Runs code with the hardware DIT feature or equivalent enabled when possible.
-#[cfg(not(target_arch = "aarch64"))]
+#[cfg(any(not(target_arch = "aarch64"), miri))]
 #[inline(always)]
 pub(crate) fn with_dit<T, F>(f: F) -> T
 where
