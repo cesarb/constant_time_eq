@@ -37,99 +37,99 @@ jobs:
         env:
           TARGET: x86_64-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile i686-unknown-linux-gnu
         env:
           TARGET: i686-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile aarch64-unknown-linux-gnu
         env:
           TARGET: aarch64-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile armv7-unknown-linux-gnueabihf
         env:
           TARGET: armv7-unknown-linux-gnueabihf
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile aarch64-apple-darwin
         env:
           TARGET: aarch64-apple-darwin
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile riscv64gc-unknown-linux-gnu
         env:
           TARGET: riscv64gc-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile riscv32imafc-unknown-none-elf
         env:
           TARGET: riscv32imafc-unknown-none-elf
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile loongarch64-unknown-linux-gnu
         env:
           TARGET: loongarch64-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile s390x-unknown-linux-gnu
         env:
           TARGET: s390x-unknown-linux-gnu
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile wasm32-unknown-unknown
         env:
           TARGET: wasm32-unknown-unknown
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Cross-compile wasm32-wasip1
         env:
           TARGET: wasm32-wasip1
         run: |
-          rustup target add $TARGET
-          cargo build --verbose --target $TARGET
-          cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
-          cargo build --verbose --release --target $TARGET --no-default-features
+          rustup target add ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }}
+          cargo build --verbose --target ${{ env.TARGET }} --no-default-features
+          cargo build --verbose --release --target ${{ env.TARGET }}
+          cargo build --verbose --release --target ${{ env.TARGET }} --no-default-features
       - name: Count instructions
         if: ${{ runner.os == 'Linux' }}
         run: |
