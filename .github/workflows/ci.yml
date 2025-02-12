@@ -92,9 +92,7 @@ jobs:
           TARGET: riscv32imafc-unknown-none-elf
         run: |
           rustup target add $TARGET
-          cargo build --verbose --target $TARGET
           cargo build --verbose --target $TARGET --no-default-features
-          cargo build --verbose --release --target $TARGET
           cargo build --verbose --release --target $TARGET --no-default-features
       - name: Cross-compile loongarch64-unknown-linux-gnu
         env:
