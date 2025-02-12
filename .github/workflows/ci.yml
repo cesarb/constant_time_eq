@@ -130,8 +130,11 @@ jobs:
           cargo build --verbose --target $TARGET --no-default-features
           cargo build --verbose --release --target $TARGET
           cargo build --verbose --release --target $TARGET --no-default-features
-      - run: cargo test --verbose --release --features count_instructions_test
-      - run: cargo test --verbose --release --no-default-features --features count_instructions_test
+      - name: Count instructions
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          cargo test --verbose --release --features count_instructions_test
+          cargo test --verbose --release --no-default-features --features count_instructions_test
 
   miri:
     name: Run tests under Miri

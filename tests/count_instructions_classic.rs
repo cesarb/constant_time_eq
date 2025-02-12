@@ -1,10 +1,17 @@
-#[cfg(all(target_os = "linux", not(miri)))]
 #[cfg(feature = "count_instructions_test")]
 mod tests {
     use std::io::Result;
 
     use constant_time_eq::classic::{constant_time_eq, constant_time_eq_n};
     use count_instructions::{Address, count_instructions};
+
+    fn detect_features() {
+        // The first time with_dit() is called, the feature detection will run.
+        // That will lead to a difference in the number of instructions, which
+        // is unrelated to the data being compared.
+        // Run a dummy comparison at least once before each test to avoid this.
+        let _ = constant_time_eq(b"", b"");
+    }
 
     #[inline(never)]
     fn count(l: &[u8], r: &[u8], capacity: usize) -> Result<Vec<Address>> {
@@ -27,6 +34,8 @@ mod tests {
     }
 
     fn test(a: u8, b: u8) -> Result<()> {
+        detect_features();
+
         const N: usize = 64;
         let l = vec![a; N];
         let r = vec![b; N];
@@ -54,6 +63,8 @@ mod tests {
     }
 
     fn test_n<const N: usize>(a: u8, b: u8) -> Result<()> {
+        detect_features();
+
         let l = [a; N];
         let r = [b; N];
         let baseline = count_n(&l, &r, 0)?;
