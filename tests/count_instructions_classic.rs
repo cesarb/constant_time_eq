@@ -2,7 +2,7 @@
 mod tests {
     use std::io::Result;
 
-    use constant_time_eq::{constant_time_eq, constant_time_eq_n};
+    use constant_time_eq::classic::{constant_time_eq, constant_time_eq_n};
     use count_instructions::{Address, count_instructions};
 
     fn detect_features() {
