@@ -1,6 +1,8 @@
 name: tests
 
 on: [push, pull_request]
+permissions:
+  contents: read
 
 jobs:
   tests:
@@ -19,7 +21,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ matrix.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+          key: ${{ matrix.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock','**/Cargo.toml') }}
       - run: rustup toolchain install ${{ matrix.toolchain }} --profile=minimal --no-self-update
       - run: rustup default ${{ matrix.toolchain }}
       - run: rustup override set ${{ matrix.toolchain }}
@@ -148,7 +150,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock','**/Cargo.toml') }}-miri
       - run: rustup toolchain install nightly --profile=minimal --no-self-update
       - run: rustup default nightly
       - run: rustup override set nightly
