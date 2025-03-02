@@ -120,89 +120,80 @@ fn movemask_epi8(a: __m128i) -> u32 {
     mask
 }
 
-/// SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
-///
-/// # Safety
-///
-/// At least n bytes must be in bounds for both pointers.
+/// Safe equivalent to _mm_loadu_si128 for byte slices.
 #[must_use]
 #[inline(always)]
-unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize) -> bool {
+fn loadu_si128(src: &[u8]) -> __m128i {
+    assert!(src.len() == size_of::<__m128i>());
+
+    // SAFETY: this file is compiled only when SSE2 is available
+    // SAFETY: the slice has enough bytes for a __m128i
+    unsafe { _mm_loadu_si128(src.as_ptr() as *const __m128i) }
+}
+
+/// SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
+#[must_use]
+#[inline(always)]
+fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+
     const LANES: usize = size_of::<__m128i>();
 
-    let tmp = if n >= LANES * 2 {
+    let tmp = if a.len() >= LANES * 2 {
         let mut mask0;
         let mut mask1;
 
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 256 bits are in bounds for both pointers
-        unsafe {
-            let tmpa0 = _mm_loadu_si128(a as *const __m128i);
-            let tmpb0 = _mm_loadu_si128(b as *const __m128i);
-            let tmpa1 = _mm_loadu_si128(a.add(LANES) as *const __m128i);
-            let tmpb1 = _mm_loadu_si128(b.add(LANES) as *const __m128i);
+        let tmpa0 = loadu_si128(&a[..LANES]);
+        let tmpb0 = loadu_si128(&b[..LANES]);
+        let tmpa1 = loadu_si128(&a[LANES..LANES * 2]);
+        let tmpb1 = loadu_si128(&b[LANES..LANES * 2]);
 
-            a = a.add(LANES * 2);
-            b = b.add(LANES * 2);
-            n -= LANES * 2;
+        a = &a[LANES * 2..];
+        b = &b[LANES * 2..];
 
-            mask0 = cmpeq_epi8(tmpa0, tmpb0);
-            mask1 = cmpeq_epi8(tmpa1, tmpb1);
+        mask0 = cmpeq_epi8(tmpa0, tmpb0);
+        mask1 = cmpeq_epi8(tmpa1, tmpb1);
+
+        while a.len() >= LANES * 2 {
+            let tmpa0 = loadu_si128(&a[..LANES]);
+            let tmpb0 = loadu_si128(&b[..LANES]);
+            let tmpa1 = loadu_si128(&a[LANES..LANES * 2]);
+            let tmpb1 = loadu_si128(&b[LANES..LANES * 2]);
+
+            a = &a[LANES * 2..];
+            b = &b[LANES * 2..];
+
+            let tmp0 = cmpeq_epi8(tmpa0, tmpb0);
+            let tmp1 = cmpeq_epi8(tmpa1, tmpb1);
+
+            mask0 = and_si128(mask0, tmp0);
+            mask1 = and_si128(mask1, tmp1);
         }
 
-        while n >= LANES * 2 {
-            // SAFETY: this file is compiled only when SSE2 is available
-            // SAFETY: at least 256 bits are in bounds for both pointers
-            unsafe {
-                let tmpa0 = _mm_loadu_si128(a as *const __m128i);
-                let tmpb0 = _mm_loadu_si128(b as *const __m128i);
-                let tmpa1 = _mm_loadu_si128(a.add(LANES) as *const __m128i);
-                let tmpb1 = _mm_loadu_si128(b.add(LANES) as *const __m128i);
+        if a.len() >= LANES {
+            let tmpa = loadu_si128(&a[..LANES]);
+            let tmpb = loadu_si128(&b[..LANES]);
 
-                a = a.add(LANES * 2);
-                b = b.add(LANES * 2);
-                n -= LANES * 2;
+            a = &a[LANES..];
+            b = &b[LANES..];
 
-                let tmp0 = cmpeq_epi8(tmpa0, tmpb0);
-                let tmp1 = cmpeq_epi8(tmpa1, tmpb1);
+            let tmp = cmpeq_epi8(tmpa, tmpb);
 
-                mask0 = and_si128(mask0, tmp0);
-                mask1 = and_si128(mask1, tmp1);
-            }
-        }
-
-        if n >= LANES {
-            // SAFETY: this file is compiled only when SSE2 is available
-            // SAFETY: at least 128 bits are in bounds for both pointers
-            unsafe {
-                let tmpa = _mm_loadu_si128(a as *const __m128i);
-                let tmpb = _mm_loadu_si128(b as *const __m128i);
-
-                a = a.add(LANES);
-                b = b.add(LANES);
-                n -= LANES;
-
-                let tmp = cmpeq_epi8(tmpa, tmpb);
-
-                mask0 = and_si128(mask0, tmp);
-            }
+            mask0 = and_si128(mask0, tmp);
         }
 
         let mask = and_si128(mask0, mask1);
         movemask_epi8(mask) ^ 0xFFFF
-    } else if n >= LANES {
-        // SAFETY: this file is compiled only when SSE2 is available
-        // SAFETY: at least 128 bits are in bounds for both pointers
-        let mask = unsafe {
-            let tmpa = _mm_loadu_si128(a as *const __m128i);
-            let tmpb = _mm_loadu_si128(b as *const __m128i);
+    } else if a.len() >= LANES {
+        let tmpa = loadu_si128(&a[..LANES]);
+        let tmpb = loadu_si128(&b[..LANES]);
 
-            a = a.add(LANES);
-            b = b.add(LANES);
-            n -= LANES;
+        a = &a[LANES..];
+        b = &b[LANES..];
 
-            cmpeq_epi8(tmpa, tmpb)
-        };
+        let mask = cmpeq_epi8(tmpa, tmpb);
 
         movemask_epi8(mask) ^ 0xFFFF
     } else {
@@ -211,21 +202,15 @@ unsafe fn constant_time_eq_sse2(mut a: *const u8, mut b: *const u8, mut n: usize
 
     // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
     // SAFETY: at least n bytes are in bounds for both pointers
-    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp.into()) }
+    unsafe { crate::generic::constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), tmp.into()) }
 }
 
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to the same number of bytes
-        a.len() == b.len() && unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), a.len()) }
-    })
+    with_dit(|| constant_time_eq_sse2(a, b))
 }
 
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to N bytes
-        unsafe { constant_time_eq_sse2(a.as_ptr(), b.as_ptr(), N) }
-    })
+    with_dit(|| constant_time_eq_sse2(&a[..], &b[..]))
 }
