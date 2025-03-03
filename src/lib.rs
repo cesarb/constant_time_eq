@@ -11,8 +11,7 @@
 //! * The length of the inputs.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(unsafe_op_in_unsafe_fn)]
-#![warn(clippy::undocumented_unsafe_blocks)]
+#![deny(clippy::undocumented_unsafe_blocks)]
 
 #[doc(hidden)]
 pub mod classic;

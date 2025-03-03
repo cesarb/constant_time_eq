@@ -106,88 +106,94 @@ fn optimizer_hide(value: Word) -> Word {
     core::hint::black_box(value)
 }
 
-/// Generic implementation of constant_time_eq and constant_time_eq_n.
+/// Equivalent to read_unaligned for byte slices.
 ///
 /// # Safety
 ///
-/// At least n bytes must be in bounds for both pointers.
+/// All bit patterns must be valid for type T.
 #[must_use]
 #[inline(always)]
-pub(crate) unsafe fn constant_time_eq_impl(
-    mut a: *const u8,
-    mut b: *const u8,
-    mut n: usize,
-    mut tmp: Word,
-) -> bool {
+unsafe fn read_unaligned_from_slice<T>(src: &[u8]) -> T {
+    assert_eq!(src.len(), size_of::<T>());
+
+    // SAFETY: the slice has enough bytes for type T
+    // SAFETY: all bit patterns are valid for type T
+    unsafe { read_unaligned(src.as_ptr() as *const T) }
+}
+
+/// Generic implementation of constant_time_eq and constant_time_eq_n.
+#[must_use]
+#[inline(always)]
+pub(crate) fn constant_time_eq_impl(mut a: &[u8], mut b: &[u8], mut tmp: Word) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+
+    // This statement does nothing, because a.len() == b.len() here,
+    // but it makes the optimizer elide some useless bounds checks.
+    b = &b[..a.len()];
+
     // Early exit for the common case when called by the SIMD code.
-    if n == 0 {
+    if a.is_empty() {
         return tmp == 0;
     }
 
-    /// Reads and compares a single word from the input, adjusting the pointers and counter.
+    /// Reads and compares a single word from the input, adjusting the slices.
     /// Returns zero if both words are equal, non-zero if any byte is different.
     ///
     /// # Safety
     ///
-    /// Enough bytes must be in bounds for both pointers; all bit patterns must be valid for T.
+    /// All bit patterns must be valid for type T.
     #[must_use]
     #[inline(always)]
-    unsafe fn cmp_step<T: BitXor<Output = T>>(
-        a: &mut *const u8,
-        b: &mut *const u8,
-        n: &mut usize,
-    ) -> T {
-        debug_assert!(*n >= size_of::<T>());
+    unsafe fn cmp_step<T: BitXor<Output = T>>(a: &mut &[u8], b: &mut &[u8]) -> T {
+        // SAFETY: all bit patterns are valid for type T
+        let tmpa = unsafe { read_unaligned_from_slice::<T>(&a[..size_of::<T>()]) };
+        // SAFETY: all bit patterns are valid for type T
+        let tmpb = unsafe { read_unaligned_from_slice::<T>(&b[..size_of::<T>()]) };
 
-        // SAFETY: enough bytes are within bounds for both pointers; all bit patterns are valid
-        unsafe {
-            let tmpa = read_unaligned(*a as *const T);
-            let tmpb = read_unaligned(*b as *const T);
+        *a = &a[size_of::<T>()..];
+        *b = &b[size_of::<T>()..];
 
-            *a = a.add(size_of::<T>());
-            *b = b.add(size_of::<T>());
-            *n -= size_of::<T>();
-
-            tmpa ^ tmpb
-        }
+        tmpa ^ tmpb
     }
 
     // The optimizer is not allowed to assume anything about the value of tmp after each iteration,
     // which prevents it from terminating the loop early if the value becomes non-zero or all-ones.
 
     // Do most of the work using the natural word size; the other blocks clean up the leftovers.
-    while n >= size_of::<Word>() {
-        // SAFETY: enough bytes for Word are within bounds; all bit patterns are valid for Word
-        let cmp = optimizer_hide(unsafe { cmp_step::<Word>(&mut a, &mut b, &mut n) });
+    while a.len() >= size_of::<Word>() {
+        // SAFETY: all bit patterns are valid for Word
+        let cmp = optimizer_hide(unsafe { cmp_step::<Word>(&mut a, &mut b) });
         tmp = optimizer_hide(tmp | cmp);
     }
 
     // These first two blocks would only be necessary for architectures with usize > 64 bits.
     // They are kept here for future-proofing, so that everything still works in that case.
-    // The optimizer tracks the range of n and will not generate any code for these blocks.
-    while n >= size_of::<u128>() {
-        // SAFETY: enough bytes for u128 are within bounds; all bit patterns are valid for u128
-        let cmp = optimizer_hide(unsafe { cmp_step::<u128>(&mut a, &mut b, &mut n) } as Word);
+    // The optimizer tracks the range of len and will not generate any code for these blocks.
+    while a.len() >= size_of::<u128>() {
+        // SAFETY: all bit patterns are valid for u128
+        let cmp = optimizer_hide(unsafe { cmp_step::<u128>(&mut a, &mut b) } as Word);
         tmp = optimizer_hide(tmp | cmp);
     }
-    if n >= size_of::<u64>() {
-        // SAFETY: enough bytes for u64 are within bounds; all bit patterns are valid for u64
-        let cmp = optimizer_hide(unsafe { cmp_step::<u64>(&mut a, &mut b, &mut n) } as Word);
+    if a.len() >= size_of::<u64>() {
+        // SAFETY: all bit patterns are valid for u64
+        let cmp = optimizer_hide(unsafe { cmp_step::<u64>(&mut a, &mut b) } as Word);
         tmp = optimizer_hide(tmp | cmp);
     }
-    if n >= size_of::<u32>() {
-        // SAFETY: enough bytes for u32 are within bounds; all bit patterns are valid for u32
-        let cmp = optimizer_hide(unsafe { cmp_step::<u32>(&mut a, &mut b, &mut n) } as Word);
+    if a.len() >= size_of::<u32>() {
+        // SAFETY: all bit patterns are valid for u32
+        let cmp = optimizer_hide(unsafe { cmp_step::<u32>(&mut a, &mut b) } as Word);
         tmp = optimizer_hide(tmp | cmp);
     }
-    if n >= size_of::<u16>() {
-        // SAFETY: enough bytes for u16 are within bounds; all bit patterns are valid for u16
-        let cmp = optimizer_hide(unsafe { cmp_step::<u16>(&mut a, &mut b, &mut n) } as Word);
+    if a.len() >= size_of::<u16>() {
+        // SAFETY: all bit patterns are valid for u16
+        let cmp = optimizer_hide(unsafe { cmp_step::<u16>(&mut a, &mut b) } as Word);
         tmp = optimizer_hide(tmp | cmp);
     }
-    if n >= size_of::<u8>() {
-        // SAFETY: enough bytes for u8 are within bounds; all bit patterns are valid for u8
-        let cmp = optimizer_hide(unsafe { cmp_step::<u8>(&mut a, &mut b, &mut n) } as Word);
+    if a.len() >= size_of::<u8>() {
+        // SAFETY: all bit patterns are valid for u8
+        let cmp = optimizer_hide(unsafe { cmp_step::<u8>(&mut a, &mut b) } as Word);
         tmp = optimizer_hide(tmp | cmp);
     }
 
@@ -212,10 +218,7 @@ pub(crate) unsafe fn constant_time_eq_impl(
 /// ```
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to the same number of bytes
-        a.len() == b.len() && unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), 0) }
-    })
+    with_dit(|| constant_time_eq_impl(a, b, 0))
 }
 
 /// Compares two fixed-size byte strings in constant time.
@@ -230,10 +233,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 /// ```
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to N bytes
-        unsafe { constant_time_eq_impl(a.as_ptr(), b.as_ptr(), N, 0) }
-    })
+    with_dit(|| constant_time_eq_impl(&a[..], &b[..], 0))
 }
 
 #[cfg(test)]

@@ -1,6 +1,7 @@
 //! NEON implementation of constant_time_eq and constant_time_eq_n.
 
 use core::arch::asm;
+use core::mem::size_of;
 
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::*;
@@ -86,85 +87,88 @@ fn get_mask_u64(mask: uint8x16_t) -> u64 {
     }
 }
 
-/// NEON implementation of constant_time_eq and constant_time_eq_n.
-///
-/// # Safety
-///
-/// At least n bytes must be in bounds for both pointers.
+/// Safe equivalent to vld1q_u8 for byte slices.
 #[must_use]
 #[inline(always)]
-unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize) -> bool {
+fn vld1q_u8_safe(src: &[u8]) -> uint8x16_t {
+    assert_eq!(src.len(), size_of::<uint8x16_t>());
+
+    // SAFETY: this file is compiled only when NEON is available
+    // SAFETY: the slice has enough bytes for a uint8x16_t
+    unsafe { vld1q_u8(src.as_ptr()) }
+}
+
+/// Safe equivalent to vld1q_u8_x2 for byte slices.
+#[must_use]
+#[inline(always)]
+fn vld1q_u8_x2_safe(src: &[u8]) -> uint8x16x2_t {
+    assert_eq!(src.len(), size_of::<uint8x16x2_t>());
+
+    // SAFETY: this file is compiled only when NEON is available
+    // SAFETY: the slice has enough bytes for a uint8x16x2_t
+    unsafe { vld1q_u8_x2(src.as_ptr()) }
+}
+
+/// NEON implementation of constant_time_eq and constant_time_eq_n.
+#[must_use]
+#[inline(always)]
+fn constant_time_eq_neon(mut a: &[u8], mut b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+
+    // This statement does nothing, because a.len() == b.len() here,
+    // but it makes the optimizer elide some useless bounds checks.
+    b = &b[..a.len()];
+
     const LANES: usize = 16;
 
-    let tmp = if n >= LANES * 2 {
-        let mut mask0;
-        let mut mask1;
+    let tmp = if a.len() >= LANES * 2 {
+        let tmpa = vld1q_u8_x2_safe(&a[..LANES * 2]);
+        let tmpb = vld1q_u8_x2_safe(&b[..LANES * 2]);
 
-        // SAFETY: this file is compiled only when NEON is available
-        // SAFETY: at least 256 bits are in bounds for both pointers
-        unsafe {
-            let tmpa = vld1q_u8_x2(a);
-            let tmpb = vld1q_u8_x2(b);
+        a = &a[LANES * 2..];
+        b = &b[LANES * 2..];
 
-            a = a.add(LANES * 2);
-            b = b.add(LANES * 2);
-            n -= LANES * 2;
+        let mut mask0 = vceqq_u8_hide(tmpa.0, tmpb.0);
+        let mut mask1 = vceqq_u8_hide(tmpa.1, tmpb.1);
 
-            mask0 = vceqq_u8_hide(tmpa.0, tmpb.0);
-            mask1 = vceqq_u8_hide(tmpa.1, tmpb.1);
+        while a.len() >= LANES * 2 {
+            let tmpa = vld1q_u8_x2_safe(&a[..LANES * 2]);
+            let tmpb = vld1q_u8_x2_safe(&b[..LANES * 2]);
+
+            a = &a[LANES * 2..];
+            b = &b[LANES * 2..];
+
+            let tmp0 = vceqq_u8_hide(tmpa.0, tmpb.0);
+            let tmp1 = vceqq_u8_hide(tmpa.1, tmpb.1);
+
+            mask0 = vandq_u8_hide(mask0, tmp0);
+            mask1 = vandq_u8_hide(mask1, tmp1);
         }
 
-        while n >= LANES * 2 {
-            // SAFETY: this file is compiled only when NEON is available
-            // SAFETY: at least 256 bits are in bounds for both pointers
-            unsafe {
-                let tmpa = vld1q_u8_x2(a);
-                let tmpb = vld1q_u8_x2(b);
+        if a.len() >= LANES {
+            let tmpa = vld1q_u8_safe(&a[..LANES]);
+            let tmpb = vld1q_u8_safe(&b[..LANES]);
 
-                a = a.add(LANES * 2);
-                b = b.add(LANES * 2);
-                n -= LANES * 2;
+            a = &a[LANES..];
+            b = &b[LANES..];
 
-                let tmp0 = vceqq_u8_hide(tmpa.0, tmpb.0);
-                let tmp1 = vceqq_u8_hide(tmpa.1, tmpb.1);
+            let tmp = vceqq_u8_hide(tmpa, tmpb);
 
-                mask0 = vandq_u8_hide(mask0, tmp0);
-                mask1 = vandq_u8_hide(mask1, tmp1);
-            }
-        }
-
-        if n >= LANES {
-            // SAFETY: this file is compiled only when NEON is available
-            // SAFETY: at least 128 bits are in bounds for both pointers
-            unsafe {
-                let tmpa = vld1q_u8(a);
-                let tmpb = vld1q_u8(b);
-
-                a = a.add(LANES);
-                b = b.add(LANES);
-                n -= LANES;
-
-                let tmp = vceqq_u8_hide(tmpa, tmpb);
-
-                mask0 = vandq_u8_hide(mask0, tmp);
-            }
+            mask0 = vandq_u8_hide(mask0, tmp);
         }
 
         let mask = vandq_u8_hide(mask0, mask1);
         get_mask_u64(mask) ^ !0
-    } else if n >= LANES {
-        // SAFETY: this file is compiled only when NEON is available
-        // SAFETY: at least 128 bits are in bounds for both pointers
-        let mask = unsafe {
-            let tmpa = vld1q_u8(a);
-            let tmpb = vld1q_u8(b);
+    } else if a.len() >= LANES {
+        let tmpa = vld1q_u8_safe(&a[..LANES]);
+        let tmpb = vld1q_u8_safe(&b[..LANES]);
 
-            a = a.add(LANES);
-            b = b.add(LANES);
-            n -= LANES;
+        a = &a[LANES..];
+        b = &b[LANES..];
 
-            vceqq_u8_hide(tmpa, tmpb)
-        };
+        let mask = vceqq_u8_hide(tmpa, tmpb);
 
         get_mask_u64(mask) ^ !0
     } else {
@@ -172,22 +176,15 @@ unsafe fn constant_time_eq_neon(mut a: *const u8, mut b: *const u8, mut n: usize
     };
 
     // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
-    // SAFETY: at least n bytes are in bounds for both pointers
-    unsafe { crate::generic::constant_time_eq_impl(a, b, n, tmp) }
+    crate::generic::constant_time_eq_impl(a, b, tmp)
 }
 
 #[must_use]
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to the same number of bytes
-        a.len() == b.len() && unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), a.len()) }
-    })
+    with_dit(|| constant_time_eq_neon(a, b))
 }
 
 #[must_use]
 pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
-    with_dit(|| {
-        // SAFETY: both pointers point to N bytes
-        unsafe { constant_time_eq_neon(a.as_ptr(), b.as_ptr(), N) }
-    })
+    with_dit(|| constant_time_eq_neon(&a[..], &b[..]))
 }
