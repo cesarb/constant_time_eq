@@ -124,17 +124,14 @@ fn constant_time_eq_neon(mut a: &[u8], mut b: &[u8]) -> bool {
     const LANES: usize = 16;
 
     let tmp = if a.len() >= LANES * 2 {
-        let mut mask0;
-        let mut mask1;
-
         let tmpa = vld1q_u8_x2_safe(&a[..LANES * 2]);
         let tmpb = vld1q_u8_x2_safe(&b[..LANES * 2]);
 
         a = &a[LANES * 2..];
         b = &b[LANES * 2..];
 
-        mask0 = vceqq_u8_hide(tmpa.0, tmpb.0);
-        mask1 = vceqq_u8_hide(tmpa.1, tmpb.1);
+        let mut mask0 = vceqq_u8_hide(tmpa.0, tmpb.0);
+        let mut mask1 = vceqq_u8_hide(tmpa.1, tmpb.1);
 
         while a.len() >= LANES * 2 {
             let tmpa = vld1q_u8_x2_safe(&a[..LANES * 2]);

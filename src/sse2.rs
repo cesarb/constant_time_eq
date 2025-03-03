@@ -146,9 +146,6 @@ fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {
     const LANES: usize = size_of::<__m128i>();
 
     let tmp = if a.len() >= LANES * 2 {
-        let mut mask0;
-        let mut mask1;
-
         let tmpa0 = loadu_si128(&a[..LANES]);
         let tmpb0 = loadu_si128(&b[..LANES]);
         let tmpa1 = loadu_si128(&a[LANES..LANES * 2]);
@@ -157,8 +154,8 @@ fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {
         a = &a[LANES * 2..];
         b = &b[LANES * 2..];
 
-        mask0 = cmpeq_epi8(tmpa0, tmpb0);
-        mask1 = cmpeq_epi8(tmpa1, tmpb1);
+        let mut mask0 = cmpeq_epi8(tmpa0, tmpb0);
+        let mut mask1 = cmpeq_epi8(tmpa1, tmpb1);
 
         while a.len() >= LANES * 2 {
             let tmpa0 = loadu_si128(&a[..LANES]);
