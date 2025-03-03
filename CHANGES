@@ -1,3 +1,7 @@
+# 0.4.1
+
+* Simplify code to make it easier to review.
+
 # 0.4.0
 
 BREAKING CHANGE: this crate now has a "std" feature which is enabled by
