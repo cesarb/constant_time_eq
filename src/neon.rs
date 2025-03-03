@@ -91,7 +91,7 @@ fn get_mask_u64(mask: uint8x16_t) -> u64 {
 #[must_use]
 #[inline(always)]
 fn vld1q_u8_safe(src: &[u8]) -> uint8x16_t {
-    assert!(src.len() == size_of::<uint8x16_t>());
+    assert_eq!(src.len(), size_of::<uint8x16_t>());
 
     // SAFETY: this file is compiled only when NEON is available
     // SAFETY: the slice has enough bytes for a uint8x16_t
@@ -102,7 +102,7 @@ fn vld1q_u8_safe(src: &[u8]) -> uint8x16_t {
 #[must_use]
 #[inline(always)]
 fn vld1q_u8_x2_safe(src: &[u8]) -> uint8x16x2_t {
-    assert!(src.len() == size_of::<uint8x16x2_t>());
+    assert_eq!(src.len(), size_of::<uint8x16x2_t>());
 
     // SAFETY: this file is compiled only when NEON is available
     // SAFETY: the slice has enough bytes for a uint8x16x2_t
@@ -116,6 +116,10 @@ fn constant_time_eq_neon(mut a: &[u8], mut b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
     }
+
+    // This statement does nothing, because a.len() == b.len() here,
+    // but it makes the optimizer elide some useless bounds checks.
+    b = &b[..a.len()];
 
     const LANES: usize = 16;
 
@@ -175,8 +179,7 @@ fn constant_time_eq_neon(mut a: &[u8], mut b: &[u8]) -> bool {
     };
 
     // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
-    // SAFETY: at least n bytes are in bounds for both pointers
-    unsafe { crate::generic::constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), tmp) }
+    crate::generic::constant_time_eq_impl(a, b, tmp)
 }
 
 #[must_use]

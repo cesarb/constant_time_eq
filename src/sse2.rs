@@ -124,7 +124,7 @@ fn movemask_epi8(a: __m128i) -> u32 {
 #[must_use]
 #[inline(always)]
 fn loadu_si128(src: &[u8]) -> __m128i {
-    assert!(src.len() == size_of::<__m128i>());
+    assert_eq!(src.len(), size_of::<__m128i>());
 
     // SAFETY: this file is compiled only when SSE2 is available
     // SAFETY: the slice has enough bytes for a __m128i
@@ -138,6 +138,10 @@ fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
     }
+
+    // This statement does nothing, because a.len() == b.len() here,
+    // but it makes the optimizer elide some useless bounds checks.
+    b = &b[..a.len()];
 
     const LANES: usize = size_of::<__m128i>();
 
@@ -201,8 +205,7 @@ fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {
     };
 
     // Note: be careful to not short-circuit ("tmp == 0 &&") the comparison here
-    // SAFETY: at least n bytes are in bounds for both pointers
-    unsafe { crate::generic::constant_time_eq_impl(a.as_ptr(), b.as_ptr(), a.len(), tmp.into()) }
+    crate::generic::constant_time_eq_impl(a, b, tmp.into())
 }
 
 #[must_use]
