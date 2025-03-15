@@ -50,7 +50,8 @@ use neon as simd;
 use generic as simd;
 
 #[cfg(all(target_arch = "aarch64", not(miri)))]
-mod dit;
+#[doc(hidden)]
+pub mod dit;
 
 #[cfg(all(target_arch = "aarch64", not(miri)))]
 use dit::with_dit;
