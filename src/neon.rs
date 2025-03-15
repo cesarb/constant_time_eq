@@ -1,4 +1,4 @@
-//! NEON implementation of constant_time_eq and constant_time_eq_n.
+//! NEON implementation of `constant_time_eq` and `constant_time_eq_n`.
 
 use core::arch::asm;
 use core::mem::size_of;
@@ -8,7 +8,7 @@ use core::arch::aarch64::*;
 
 use crate::with_dit;
 
-/// Equivalent to vceqq_u8, but hidden from the compiler.
+/// Equivalent to `vceqq_u8`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from computing the mask in other ways which might not be
@@ -31,7 +31,7 @@ fn vceqq_u8_hide(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     c
 }
 
-/// Equivalent to vandq_u8, but hidden from the compiler.
+/// Equivalent to `vandq_u8`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from short circuiting the computation once the mask becomes
@@ -53,7 +53,7 @@ fn vandq_u8_hide(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     c
 }
 
-/// Equivalent to vshrn_n_u16(..., 4), but hidden from the compiler.
+/// Equivalent to `vshrn_n_u16(..., 4)`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from extracting the mask in other ways which might not be
@@ -75,7 +75,7 @@ fn vshrn_n_u16_4_hide(a: uint16x8_t) -> uint8x8_t {
     mask
 }
 
-/// Moves a mask created by vceqq_u8 to a u64 register, with each all-zero or
+/// Moves a mask created by `vceqq_u8` to a `u64` register, with each all-zero or
 /// all-ones mask byte represented as an all-zero or all-ones half-byte.
 #[must_use]
 #[inline(always)]
@@ -87,29 +87,29 @@ fn get_mask_u64(mask: uint8x16_t) -> u64 {
     }
 }
 
-/// Safe equivalent to vld1q_u8 for byte slices.
+/// Safe equivalent to `vld1q_u8` for byte slices.
 #[must_use]
 #[inline(always)]
 fn vld1q_u8_safe(src: &[u8]) -> uint8x16_t {
     assert_eq!(src.len(), size_of::<uint8x16_t>());
 
     // SAFETY: this file is compiled only when NEON is available
-    // SAFETY: the slice has enough bytes for a uint8x16_t
+    // SAFETY: the slice has enough bytes for a `uint8x16_t`
     unsafe { vld1q_u8(src.as_ptr()) }
 }
 
-/// Safe equivalent to vld1q_u8_x2 for byte slices.
+/// Safe equivalent to `vld1q_u8_x2` for byte slices.
 #[must_use]
 #[inline(always)]
 fn vld1q_u8_x2_safe(src: &[u8]) -> uint8x16x2_t {
     assert_eq!(src.len(), size_of::<uint8x16x2_t>());
 
     // SAFETY: this file is compiled only when NEON is available
-    // SAFETY: the slice has enough bytes for a uint8x16x2_t
+    // SAFETY: the slice has enough bytes for a `uint8x16x2_t`
     unsafe { vld1q_u8_x2(src.as_ptr()) }
 }
 
-/// NEON implementation of constant_time_eq and constant_time_eq_n.
+/// NEON implementation of `constant_time_eq` and `constant_time_eq_n`.
 #[must_use]
 #[inline(always)]
 fn constant_time_eq_neon(mut a: &[u8], mut b: &[u8]) -> bool {

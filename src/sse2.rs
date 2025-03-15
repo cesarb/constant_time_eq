@@ -1,4 +1,4 @@
-//! SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
+//! SSE2/AVX implementation of `constant_time_eq` and `constant_time_eq_n`.
 //!
 //! Note: some microarchitectures split vector operations and/or vector registers larger than
 //! 128-bit, and might have optimizations for when one of the halves is all-zeros. To protect
@@ -15,7 +15,7 @@ use core::arch::x86_64::*;
 
 use crate::with_dit;
 
-/// Equivalent to _mm_cmpeq_epi8, but hidden from the compiler.
+/// Equivalent to `_mm_cmpeq_epi8`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from computing the mask in other ways which might not be
@@ -50,7 +50,7 @@ fn cmpeq_epi8(a: __m128i, b: __m128i) -> __m128i {
     c
 }
 
-/// Equivalent to _mm_and_si128, but hidden from the compiler.
+/// Equivalent to `_mm_and_si128`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from short circuiting the computation once the mask becomes
@@ -84,7 +84,7 @@ fn and_si128(a: __m128i, b: __m128i) -> __m128i {
     c
 }
 
-/// Equivalent to _mm_movemask_epi8, but hidden from the compiler.
+/// Equivalent to `_mm_movemask_epi8`, but hidden from the compiler.
 ///
 /// The use of inline assembly instead of an intrinsic prevents a sufficiently
 /// smart compiler from extracting the mask in other ways which might not be
@@ -120,7 +120,7 @@ fn movemask_epi8(a: __m128i) -> u32 {
     mask
 }
 
-/// Safe equivalent to _mm_loadu_si128 for byte slices.
+/// Safe equivalent to `_mm_loadu_si128` for byte slices.
 #[must_use]
 #[inline(always)]
 fn loadu_si128(src: &[u8]) -> __m128i {
@@ -128,10 +128,10 @@ fn loadu_si128(src: &[u8]) -> __m128i {
 
     // SAFETY: this file is compiled only when SSE2 is available
     // SAFETY: the slice has enough bytes for a __m128i
-    unsafe { _mm_loadu_si128(src.as_ptr() as *const __m128i) }
+    unsafe { _mm_loadu_si128(src.as_ptr().cast::<__m128i>()) }
 }
 
-/// SSE2/AVX implementation of constant_time_eq and constant_time_eq_n.
+/// SSE2/AVX implementation of `constant_time_eq` and `constant_time_eq_n`.
 #[must_use]
 #[inline(always)]
 fn constant_time_eq_sse2(mut a: &[u8], mut b: &[u8]) -> bool {

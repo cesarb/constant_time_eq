@@ -1,4 +1,4 @@
-//! Generic implementation of constant_time_eq and constant_time_eq_n.
+//! Generic implementation of `constant_time_eq` and `constant_time_eq_n`.
 //!
 //! This implementation does SIMD in general-purpose registers instead of vector registers, and
 //! uses inline assembly only to hide the dependencies and comparisons from the optimizer, to
@@ -106,7 +106,7 @@ fn optimizer_hide(value: Word) -> Word {
     core::hint::black_box(value)
 }
 
-/// Equivalent to read_unaligned for byte slices.
+/// Equivalent to `read_unaligned` for byte slices.
 ///
 /// # Safety
 ///
@@ -118,10 +118,10 @@ unsafe fn read_unaligned_from_slice<T>(src: &[u8]) -> T {
 
     // SAFETY: the slice has enough bytes for type T
     // SAFETY: all bit patterns are valid for type T
-    unsafe { read_unaligned(src.as_ptr() as *const T) }
+    unsafe { read_unaligned(src.as_ptr().cast::<T>()) }
 }
 
-/// Generic implementation of constant_time_eq and constant_time_eq_n.
+/// Generic implementation of `constant_time_eq` and `constant_time_eq_n`.
 #[must_use]
 #[inline(always)]
 pub(crate) fn constant_time_eq_impl(mut a: &[u8], mut b: &[u8], mut tmp: Word) -> bool {
