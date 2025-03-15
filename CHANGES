@@ -1,3 +1,9 @@
+# 0.4.2
+
+* Refactor detection of the DIT feature on ARM. For builds without the
+  "std" feature, there's now an undocumented function to force the use
+  of the DIT bit.
+
 # 0.4.1
 
 * Simplify code to make it easier to review.
