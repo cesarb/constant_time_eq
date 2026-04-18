@@ -1,3 +1,9 @@
+# 0.4.3
+
+* Rust 1.95.0 stabilized inline assembly for PowerPC. Increase the Rust
+  minimum version to allow its use. Cargo's version-aware dependency
+  resolution should prevent this from being a breaking change.
+
 # 0.4.2
 
 * Refactor detection of the DIT feature on ARM. For builds without the
