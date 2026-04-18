@@ -62,6 +62,8 @@ pub(crate) type Word = u8;
         target_arch = "riscv64",
         target_arch = "loongarch64",
         target_arch = "s390x",
+        target_arch = "powerpc",
+        target_arch = "powerpc64",
     )
 ))]
 #[must_use]
@@ -87,6 +89,8 @@ fn optimizer_hide(mut value: Word) -> Word {
         target_arch = "riscv64",
         target_arch = "loongarch64",
         target_arch = "s390x",
+        target_arch = "powerpc",
+        target_arch = "powerpc64",
     ))
 ))]
 #[must_use]
