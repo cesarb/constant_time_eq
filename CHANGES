@@ -1,4 +1,14 @@
-# 0.4.3
+# 0.5.0
+
+* Unfortunately, the Rust-version aware resolver only has an effect if
+  the main crate being compiled is using edition 2024 or opts in, it's
+  not enough to have edition 2024 in a dependency. Yanked 0.4.3 and
+  released 0.5.0; no changes other than the version number. Being able
+  to add new inline assembly architectures without requiring a manual
+  version update in all dependent crates will have to wait until most
+  of the ecosystem is using edition 2024.
+
+# 0.4.3 (yanked)
 
 * Rust 1.95.0 stabilized inline assembly for PowerPC. Increase the Rust
   minimum version to allow its use. Cargo's version-aware dependency
