@@ -50,22 +50,7 @@ pub(crate) type Word = usize;
 pub(crate) type Word = u8;
 
 /// Hides a value from the optimizer.
-#[cfg(all(
-    not(miri),
-    any(
-        target_arch = "x86",
-        target_arch = "x86_64",
-        target_arch = "arm",
-        target_arch = "aarch64",
-        target_arch = "arm64ec",
-        target_arch = "riscv32",
-        target_arch = "riscv64",
-        target_arch = "loongarch64",
-        target_arch = "s390x",
-        target_arch = "powerpc",
-        target_arch = "powerpc64",
-    )
-))]
+#[cfg(all(inline_asm_is_stable, not(miri)))]
 #[must_use]
 #[inline(always)]
 fn optimizer_hide(mut value: Word) -> Word {
@@ -77,22 +62,7 @@ fn optimizer_hide(mut value: Word) -> Word {
 }
 
 /// Attempts to hide a value from the optimizer.
-#[cfg(any(
-    miri,
-    not(any(
-        target_arch = "x86",
-        target_arch = "x86_64",
-        target_arch = "arm",
-        target_arch = "aarch64",
-        target_arch = "arm64ec",
-        target_arch = "riscv32",
-        target_arch = "riscv64",
-        target_arch = "loongarch64",
-        target_arch = "s390x",
-        target_arch = "powerpc",
-        target_arch = "powerpc64",
-    ))
-))]
+#[cfg(any(not(inline_asm_is_stable), miri))]
 #[must_use]
 #[inline(never)]
 fn optimizer_hide(value: Word) -> Word {
