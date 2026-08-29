@@ -26,9 +26,6 @@ default = ["std"]
 # Necessary to detect at runtime whether DIT is available on aarch64.
 std = []
 
-# Enables tests which depend on the count_instructions crate.
-count_instructions_test = []
-
 [[bench]]
 name = "bench"
 harness = false

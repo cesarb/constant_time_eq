@@ -2,6 +2,7 @@ use std::env;
 
 fn main() {
     if rustversion::cfg!(since(1.80)) {
+        println!("cargo:rustc-check-cfg=cfg(count_instructions_test)");
         println!("cargo:rustc-check-cfg=cfg(inline_asm_is_stable)");
     }
 
@@ -16,5 +17,9 @@ fn main() {
     };
     if inline_asm_is_stable {
         println!("cargo:rustc-cfg=inline_asm_is_stable");
+    }
+
+    if option_env!("COUNT_INSTRUCTIONS_TEST").map_or_default(|v| !v.is_empty()) {
+        println!("cargo:rustc-cfg=count_instructions_test");
     }
 }

@@ -1,4 +1,4 @@
-#[cfg(feature = "count_instructions_test")]
+#[cfg(count_instructions_test)]
 mod tests {
     use std::io::Result;
 
