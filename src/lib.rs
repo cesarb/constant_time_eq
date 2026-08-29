@@ -14,9 +14,6 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
 
 #[doc(hidden)]
-pub mod classic;
-
-#[doc(hidden)]
 pub mod generic;
 
 #[cfg(all(

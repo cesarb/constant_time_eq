@@ -32,7 +32,3 @@ harness = false
 [[bench]]
 name = "bench_generic"
 harness = false
-
-[[bench]]
-name = "bench_classic"
-harness = false
