@@ -12,7 +12,7 @@ use core::arch::asm;
 /// Describes whether `FEAT_DIT` and `FEAT_SB` are known to be implemented.
 #[repr(u8)]
 #[derive(Clone, Copy)]
-enum Features {
+pub(crate) enum Features {
     // Unknown = 0,
     #[allow(dead_code)]
     Neither = 1,
@@ -31,7 +31,7 @@ mod detect {
 
     /// Determines whether `FEAT_DIT` and `FEAT_SB` are known to be implemented.
     #[inline]
-    pub fn get_aarch64_dit_sb_features() -> Features {
+    pub(crate) fn get_aarch64_dit_sb_features() -> Features {
         let features = FEATURES.load(Ordering::Relaxed);
         if features > 0 {
             // SAFETY: a non-zero value is a valid discriminant from Features
@@ -47,7 +47,7 @@ mod detect {
     ///
     /// Either parameter must not be set to true if the corresponding feature
     /// is not implemented.
-    pub unsafe fn set_aarch64_dit_sb_features(dit: bool, sb: bool) -> Features {
+    pub(crate) unsafe fn set_aarch64_dit_sb_features(dit: bool, sb: bool) -> Features {
         let dit = dit || cfg!(target_feature = "dit");
         let sb = sb || cfg!(target_feature = "sb");
         let features = match (dit, sb) {
