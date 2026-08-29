@@ -167,7 +167,7 @@ unsafe fn enable_dit() {
     // SAFETY: called only when `FEAT_DIT` is implemented
     unsafe {
         // The compiler must not cache values or flags across this instruction.
-        asm!("msr dit, #{}", const 1, options(nostack));
+        asm!("msr dit, #1", options(nostack));
     }
 }
 

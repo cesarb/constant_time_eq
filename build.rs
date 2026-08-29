@@ -19,7 +19,7 @@ fn main() {
         println!("cargo:rustc-cfg=inline_asm_is_stable");
     }
 
-    if option_env!("COUNT_INSTRUCTIONS_TEST").map_or_default(|v| !v.is_empty()) {
+    if option_env!("COUNT_INSTRUCTIONS_TEST").map_or(false, |v| !v.is_empty()) {
         println!("cargo:rustc-cfg=count_instructions_test");
     }
 }

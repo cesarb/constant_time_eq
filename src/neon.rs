@@ -66,10 +66,9 @@ fn vshrn_n_u16_4_hide(a: uint16x8_t) -> uint8x8_t {
     // SAFETY: assembly instruction touches only these registers
     #[cfg(target_arch = "aarch64")]
     unsafe {
-        asm!("shrn {mask:v}.8b, {a:v}.8h, #{n}",
+        asm!("shrn {mask:v}.8b, {a:v}.8h, #4",
             mask = lateout(vreg) mask,
             a = in(vreg) a,
-            n = const 4,
             options(pure, nomem, preserves_flags, nostack));
     }
     mask
