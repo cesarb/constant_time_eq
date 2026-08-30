@@ -213,10 +213,11 @@ pub fn constant_time_eq_n<const N: usize>(a: &[u8; N], b: &[u8; N]) -> bool {
 #[cfg(test)]
 mod tests {
     #[cfg(count_instructions_test)]
+    extern crate std;
+
+    #[cfg(count_instructions_test)]
     #[test]
     fn count_optimizer_hide_instructions() -> std::io::Result<()> {
-        extern crate std;
-
         use super::{Word, optimizer_hide};
         use count_instructions::count_instructions;
 
