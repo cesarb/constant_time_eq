@@ -1,3 +1,15 @@
+# 0.6.0
+
+* The official repository for this project is now on Codeberg. The git
+  repository on GitHub is still in use; issues and pull requests are
+  accepted on either repository.
+* The availability of stable inline assembly for the target architecture
+  is now auto-detected based on the rustc version through a build script,
+  which allowed lowering the MSRV again.
+* The development-only count_instructions_test feature has been removed,
+  and replaced with an environment variable. To run these tests (currently
+  Linux-only), set COUNT_INSTRUCTIONS_TEST=1 when calling cargo test.
+
 # 0.5.0
 
 * Unfortunately, the Rust-version aware resolver only has an effect if
