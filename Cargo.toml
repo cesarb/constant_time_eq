@@ -14,7 +14,7 @@ license = "CC0-1.0 OR MIT-0 OR Apache-2.0"
 rust-version = "1.66.0"
 
 [build-dependencies]
-rustversion = "1.0"
+rustversion = "1.0.6"
 
 [dev-dependencies]
 criterion = { version = "0.8.0", features = ["cargo_bench_support", "html_reports"] }
