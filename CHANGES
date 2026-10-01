@@ -1,3 +1,7 @@
+# 0.6.1
+
+* Fixed minimal version of rustversion dependency.
+
 # 0.6.0
 
 * The official repository for this project is now on Codeberg. The git
