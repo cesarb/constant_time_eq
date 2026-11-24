@@ -1,3 +1,7 @@
+# Unreleased
+
+* Fixed the build for AArch64 ILP32 targets (like `arm64_32-apple-watchos`).
+
 # 0.6.1
 
 * Fixed minimal version of rustversion dependency.
