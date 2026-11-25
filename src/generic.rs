@@ -16,14 +16,19 @@ use core::ptr::read_unaligned;
 use crate::with_dit;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
+///
+/// AArch64 always uses 64-bit registers, even on ILP32 targets (like
+/// `arm64_32-apple-watchos`), so its word type is 64 bits regardless of the
+/// pointer width.
 #[cfg(all(
-    target_pointer_width = "64",
+    any(target_arch = "aarch64", target_pointer_width = "64"),
     any(not(target_arch = "riscv64"), target_feature = "unaligned-scalar-mem")
 ))]
 pub(crate) type Word = u64;
 
 /// The natural word type for this architecture. All bit patterns must be valid for this type.
 #[cfg(all(
+    not(target_arch = "aarch64"),
     target_pointer_width = "32",
     any(not(target_arch = "riscv32"), target_feature = "unaligned-scalar-mem")
 ))]
