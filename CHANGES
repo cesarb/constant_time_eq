@@ -1,4 +1,4 @@
-# Unreleased
+# 0.6.2
 
 * Fixed the build for AArch64 ILP32 targets (like `arm64_32-apple-watchos`).
 
